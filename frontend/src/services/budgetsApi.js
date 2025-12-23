@@ -5,6 +5,6 @@ export const getBudgets = async (month, year) => {
   return res.data || [];
 };
 
-export const saveBudget = (data) => api.post("/api/budgets", data);
+export const saveBudget = (data) => api.post("/budgets", data);
 
-export const deleteBudget = (id) => api.delete(`/api/budgets/${id}`);
+export const deleteBudget = (id) => api.delete(`/budgets/${id}`);

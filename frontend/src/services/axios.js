@@ -1,5 +1,6 @@
 import axios from "axios";
 
+// Buat instance Axios
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
   headers: {
@@ -7,7 +8,7 @@ const api = axios.create({
   },
 });
 
-// REQUEST → pasang token
+// REQUEST → pasang token otomatis
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("token");
@@ -20,15 +21,15 @@ api.interceptors.request.use(
 );
 
 // RESPONSE → auto logout kalau 401
-// api.interceptors.response.use(
-//   (response) => response,
-//   (error) => {
-//     if (error.response?.status === 401) {
-//       localStorage.clear();
-//       window.location.href = "/login";
-//     }
-//     return Promise.reject(error);
-//   }
-// );
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.clear();
+      window.location.href = "/login";
+    }
+    return Promise.reject(error);
+  }
+);
 
 export default api;
