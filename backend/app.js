@@ -25,7 +25,10 @@ app.use("/api/auth", authsRoutes);
 
 console.log("✅ authRoutes loaded");
 
-const PORT = 5000;
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
+// const PORT = 5000;
+// app.listen(PORT, () => {
+//   console.log(`🚀 Server running on http://localhost:${PORT}`);
+// });
+app.listen(process.env.PORT || 3000, () => {
+  console.log("Server running");
 });
