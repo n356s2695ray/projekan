@@ -4,10 +4,10 @@ require("dotenv").config();
 
 const app = express();
 
-/* ================== CORS FIX ================== */
+/* 🔥 CORS HARUS PALING ATAS */
 app.use(
   cors({
-    origin: "*", // sementara (aman buat dev)
+    origin: "*", // sementara, nanti bisa dikunci
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
@@ -15,25 +15,19 @@ app.use(
 
 app.use(express.json());
 
-/* ================== ROUTES ================== */
-const dashboardRoutes = require("./src/routes/dashboardRoutes");
-const transactionRoutes = require("./src/routes/transactionsRoutes");
-const budgetRoutes = require("./src/routes/budgetsRoutes");
-const walletsRoutes = require("./src/routes/walletsRoutes");
-const authsRoutes = require("./src/routes/authRoutes");
-
+/* TEST */
 app.get("/", (req, res) => {
   res.send("PONG");
 });
 
-app.use("/api/budgets", budgetRoutes);
-app.use("/api/dashboard", dashboardRoutes);
-app.use("/api/transactions", transactionRoutes);
-app.use("/api/wallets", walletsRoutes);
-app.use("/api/auth", authsRoutes);
+/* ROUTES */
+app.use("/api/budgets", require("./src/routes/budgetsRoutes"));
+app.use("/api/dashboard", require("./src/routes/dashboardRoutes"));
+app.use("/api/transactions", require("./src/routes/transactionsRoutes"));
+app.use("/api/wallets", require("./src/routes/walletsRoutes"));
+app.use("/api/auth", require("./src/routes/authRoutes"));
 
-/* ================== PORT ================== */
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });

@@ -4,7 +4,7 @@ import api from "./axios"; // pastikan path bener ke axios instance lo
 // TRANSFER antar wallet
 export const transferWallet = async (data) => {
   try {
-    const res = await api.post("/wallets/transfer", data); // endpoint string relatif ke baseURL
+    const res = await api.post("/api/wallets/transfer", data); // endpoint string relatif ke baseURL
     return res.data;
   } catch (err) {
     console.error("Error transferring wallet:", err);
@@ -15,7 +15,7 @@ export const transferWallet = async (data) => {
 // GET semua wallet
 export const getWallets = async () => {
   try {
-    const res = await api.get("/wallets"); // endpoint string relatif ke baseURL
+    const res = await api.get("/api/wallets"); // endpoint string relatif ke baseURL
     return res.data;
   } catch (err) {
     console.error("Error fetching wallets:", err);

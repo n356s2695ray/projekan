@@ -4,7 +4,7 @@ import api from "./axios";
 // GET summary keseluruhan
 export const getSummary = async () => {
   try {
-    const res = await api.get("/dashboard/summary");
+    const res = await api.get("/api/dashboard/summary");
     return res.data;
   } catch (err) {
     console.error("Error fetching summary:", err);
@@ -15,7 +15,7 @@ export const getSummary = async () => {
 // GET category
 export const getCategory = async () => {
   try {
-    const res = await api.get("/dashboard/category");
+    const res = await api.get("/api/dashboard/category");
     return res.data;
   } catch (err) {
     console.error("Error fetching category:", err);
@@ -26,7 +26,7 @@ export const getCategory = async () => {
 // GET daily summary
 export const getDaily = async () => {
   try {
-    const res = await api.get("/dashboard/daily");
+    const res = await api.get("/api/dashboard/daily");
     return res.data;
   } catch (err) {
     console.error("Error fetching daily summary:", err);

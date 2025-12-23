@@ -4,7 +4,7 @@ import api from "./axios"; // pastikan ini path bener ke axios instance lo
 // GET semua transaksi / berdasarkan walletId
 export const getTransactions = async (walletId = null) => {
   try {
-    const url = walletId ? `/transactions?wallet_id=${walletId}` : `/transactions`;
+    const url = walletId ? `/transactions?wallet_id=${walletId}` : `/api/transactions`;
     const res = await api.get(url);
     return res.data;
   } catch (err) {
@@ -16,7 +16,7 @@ export const getTransactions = async (walletId = null) => {
 // ADD transaksi baru
 export const addTransaction = async (data) => {
   try {
-    const res = await api.post("/transactions", data);
+    const res = await api.post("/api/transactions", data);
     return res.data;
   } catch (err) {
     console.error("Error adding transaction:", err);
