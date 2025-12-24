@@ -1,3 +1,4 @@
+const path = require("path");
 const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
@@ -32,6 +33,21 @@ app.use("/api/dashboard", require("./src/routes/dashboardRoutes"));
 app.use("/api/transactions", require("./src/routes/transactionsRoutes"));
 app.use("/api/wallets", require("./src/routes/walletsRoutes"));
 app.use("/api/auth", require("./src/routes/authRoutes"));
+
+/* ============================= */
+/* STATIC SERVING          */
+/* ============================= */
+
+// 1. Cek folder build frontend (Vite biasanya pakai folder 'dist')
+const frontendPath = path.join(__dirname, "../frontend/dist");
+
+// 2. Sajikan file statis
+app.use(express.static(frontendPath));
+
+// 3. Jika user akses URL selain API, berikan index.html (Penting untuk React Router)
+app.get("*", (req, res) => {
+  res.sendFile(path.join(frontendPath, "index.html"));
+});
 
 /* ============================= */
 /*          START SERVER          */
