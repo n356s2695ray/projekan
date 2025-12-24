@@ -1,4 +1,4 @@
-const API_URL = import.meta.env.VITE_API_URL;
+// const API_URL = import.meta.env.VITE_API_URL;
 import React, { useState, useMemo, useEffect } from "react";
 import {
   TrendingUp,
@@ -52,17 +52,6 @@ const Dashboard = () => {
       setDarkMode(newDarkMode);
     });
     return unsubscribe;
-  }, []);
-
-  useEffect(() => {
-    fetch(`${API_URL}/`)
-      .then((res) => res.text())
-      .then((data) => {
-        console.log("✅ Backend Railway:", data);
-      })
-      .catch((err) => {
-        console.error("❌ Backend error:", err);
-      });
   }, []);
 
 
