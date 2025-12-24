@@ -9,15 +9,23 @@ const db = mysql.createPool({
   port: process.env.DB_PORT || 3307,
 });
 
-(async () => {
-  try {
-    const conn = await db.getConnection();
-    console.log("✅ Database connected successfully!");
-    conn.release();
-  } catch (err) {
-    console.error("❌ Database connection failed:", err.message);
+// (async () => {
+//   try {
+//     const conn = await db.getConnection();
+//     console.log("✅ Database connected successfully!");
+//     conn.release();
+//   } catch (err) {
+//     console.error("❌ Database connection failed:", err.message);
+//   }
+// })();
+
+connection.connect((err) => {
+  if (err) {
+    console.error("❌ Database connection failed: " + err.stack); // Gunakan err.stack untuk detail
+    return;
   }
-})();
+  console.log("✅ Database connected");
+});
 
 module.exports = db; // export langsung
 

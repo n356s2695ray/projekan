@@ -1,4 +1,3 @@
-const path = require("path");
 const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
@@ -22,7 +21,7 @@ app.use(express.json());
 
 /* TEST */
 app.get("/", (req, res) => {
-  res.send("PONG");
+  // res.send("PONG");
 });
 
 /* ============================= */
@@ -39,6 +38,7 @@ app.use("/api/auth", require("./src/routes/authRoutes"));
 /* ============================= */
 
 // 1. Cek folder build frontend (Vite biasanya pakai folder 'dist')
+const path = require("path");
 const frontendPath = path.join(__dirname, "../frontend/dist");
 
 // 2. Sajikan file statis
