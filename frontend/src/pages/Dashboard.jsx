@@ -1,50 +1,173 @@
 // const API_URL = import.meta.env.VITE_API_URL;
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import {
   TrendingUp,
   TrendingDown,
   DollarSign,
   Wallet,
   CreditCard,
-  PieChart,
   Calendar,
   Bell,
   Target,
-  AlertCircle,
   BarChart3,
-  LineChart,
-  Users,
-  Shield,
-  Zap,
   Sparkles,
   ChevronRight,
-  Download,
-  Filter,
-  MoreVertical,
-  Eye,
-  EyeOff,
   ArrowUpRight,
   ArrowDownRight,
-  TrendingUp as ArrowTrendingUp,
   Clock,
-  CheckCircle,
-  XCircle,
-  Loader2,
   Plus,
   ChevronDown,
   RefreshCw,
+  Coins,
+  Banknote,
+  Zap,
+  Shield,
+  Users,
+  PiggyBank,
 } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import CardBalance from "../components/CardBalance";
 import ChartSpending from "../components/ChartSpending";
-import TransactionTable from "../components/TransactionTable";
 import CurrencyConverter from "../components/CurrencyConverter";
 import { useFinance } from "../context/FinanceContext";
 import { darkModeManager } from "../utils/darkModeManager";
 
+// Komponen FloatingMoney untuk animasi uang melayang
+const FloatingMoney = ({ type = "income", isActive = false }) => {
+  const [particles, setParticles] = useState([]);
+
+  useEffect(() => {
+    if (!isActive) return;
+
+    const newParticles = Array.from({ length: 12 }, (_, i) => ({
+      id: i,
+      x: Math.random() * 100,
+      size: Math.random() * 20 + 10,
+      duration: Math.random() * 2 + 1,
+      delay: Math.random() * 0.5,
+      rotation: Math.random() * 360,
+    }));
+
+    setParticles(newParticles);
+
+    const timer = setTimeout(() => setParticles([]), 3000);
+    return () => clearTimeout(timer);
+  }, [isActive]);
+
+  const color = type === "income" ? "text-emerald-400" : 
+                type === "expense" ? "text-rose-400" : 
+                "text-blue-400";
+
+  return (
+    <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
+      <AnimatePresence>
+        {particles.map((particle) => (
+          <motion.div
+            key={particle.id}
+            className={`absolute ${color}`}
+            style={{
+              left: `${particle.x}%`,
+              top: '100%',
+            }}
+            initial={{
+              y: 0,
+              opacity: 0,
+              scale: 0,
+              rotate: particle.rotation,
+            }}
+            animate={{
+              y: -window.innerHeight * 1.5,
+              opacity: [0, 1, 0],
+              scale: [0, 1, 0],
+              rotate: particle.rotation + 720,
+              x: particle.x + (Math.random() * 100 - 50),
+            }}
+            transition={{
+              duration: particle.duration,
+              delay: particle.delay,
+              ease: "easeOut",
+            }}
+            exit={{ opacity: 0 }}
+          >
+            {type === "income" ? (
+              <Coins style={{ width: particle.size, height: particle.size }} />
+            ) : type === "expense" ? (
+              <Banknote style={{ width: particle.size, height: particle.size }} />
+            ) : (
+              <DollarSign style={{ width: particle.size, height: particle.size }} />
+            )}
+          </motion.div>
+        ))}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+// Komponen AnimatedCounter untuk animasi angka
+const AnimatedCounter = ({ value, duration = 1.5, prefix = "Rp " }) => {
+  const [displayValue, setDisplayValue] = useState(0);
+  const prevValue = useRef(value);
+
+  useEffect(() => {
+    if (value !== prevValue.current) {
+      const start = prevValue.current;
+      const end = value;
+      const increment = (end - start) / (duration * 60);
+      let current = start;
+      let frameId;
+
+      const animate = () => {
+        current += increment;
+        if ((increment > 0 && current >= end) || (increment < 0 && current <= end)) {
+          current = end;
+          cancelAnimationFrame(frameId);
+        } else {
+          frameId = requestAnimationFrame(animate);
+        }
+        setDisplayValue(Math.floor(current));
+      };
+
+      frameId = requestAnimationFrame(animate);
+      prevValue.current = end;
+
+      return () => cancelAnimationFrame(frameId);
+    }
+  }, [value, duration]);
+
+  const formatNumber = (num) => {
+    if (num >= 1000000000) {
+      return `${(num / 1000000000).toFixed(1)}B`;
+    }
+    if (num >= 1000000) {
+      return `${(num / 1000000).toFixed(1)}M`;
+    }
+    if (num >= 1000) {
+      return `${(num / 1000).toFixed(0)}K`;
+    }
+    return num.toLocaleString('id-ID');
+  };
+
+  return (
+    <motion.span
+      initial={{ scale: 0.8, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      transition={{ type: "spring", stiffness: 200, damping: 20 }}
+      className="inline-block"
+    >
+      {prefix}{formatNumber(displayValue)}
+    </motion.span>
+  );
+};
+
 const Dashboard = () => {
   // State untuk dark mode dari manager
   const [darkMode, setDarkMode] = useState(darkModeManager.getDarkMode());
+  const [timeRange, setTimeRange] = useState("month");
+  const [showBalance, setShowBalance] = useState(true);
+  const [showFullChart, setShowFullChart] = useState(false);
+  const [currencyCollapsed, setCurrencyCollapsed] = useState(false);
+  const [activeMoneyAnimation, setActiveMoneyAnimation] = useState(null);
+  const [hoveredStat, setHoveredStat] = useState(null);
 
   // Subscribe to dark mode changes
   useEffect(() => {
@@ -54,7 +177,6 @@ const Dashboard = () => {
     return unsubscribe;
   }, []);
 
-
   const {
     budgets = {},
     categories = [],
@@ -62,13 +184,7 @@ const Dashboard = () => {
     totalIncome = 0,
     totalExpense = 0,
     walletTotals = {},
-    dashboardData = {},
   } = useFinance();
-
-  const [timeRange, setTimeRange] = useState("month");
-  const [showBalance, setShowBalance] = useState(true);
-  const [showFullChart, setShowFullChart] = useState(false);
-  const [currencyCollapsed, setCurrencyCollapsed] = useState(false);
 
   // Get user from localStorage
   const user = JSON.parse(localStorage.getItem("user")) || {
@@ -77,7 +193,13 @@ const Dashboard = () => {
     role: "Premium User",
   };
 
-  // Calculate budget usage dengan useMemo untuk optimasi
+  // Trigger animasi uang
+  const triggerMoneyAnimation = (type) => {
+    setActiveMoneyAnimation(type);
+    setTimeout(() => setActiveMoneyAnimation(null), 100);
+  };
+
+  // Calculate budget usage
   const calculateBudgetUsage = useMemo(
     () => (categoryId) => {
       const category = categories.find((c) => c.id === categoryId);
@@ -102,7 +224,7 @@ const Dashboard = () => {
     [transactions, budgets, categories]
   );
 
-  // Filter budget entries yang memiliki nilai budget
+  // Filter budget entries
   const budgetEntries = useMemo(() => {
     return Object.entries(budgets || {})
       .filter(([, budget]) => budget > 0)
@@ -111,90 +233,41 @@ const Dashboard = () => {
         const usage = calculateBudgetUsage(Number(categoryId));
         return { categoryId: Number(categoryId), budget, category, usage };
       })
-      .filter((item) => item.category) // Hanya yang punya kategori
-      .slice(0, 3); // Hanya tampilkan 3 item
+      .filter((item) => item.category)
+      .slice(0, 3);
   }, [budgets, categories, calculateBudgetUsage]);
-
-  // Quick stats data dengan useMemo
-  const quickStats = useMemo(
-    () => [
-      {
-        title: "Total Income",
-        value: `Rp ${totalIncome.toLocaleString("id-ID")}`,
-        change: "+5.2%",
-        isPositive: true,
-        icon: TrendingUp,
-        color: "from-green-500 to-emerald-500",
-        description: "This month",
-      },
-      {
-        title: "Total Expense",
-        value: `Rp ${totalExpense.toLocaleString("id-ID")}`,
-        change: "-3.1%",
-        isPositive: false,
-        icon: TrendingDown,
-        color: "from-red-500 to-rose-500",
-        description: "From last month",
-      },
-      {
-        title: "Net Balance",
-        value: `Rp ${(totalIncome - totalExpense).toLocaleString("id-ID")}`,
-        change: totalIncome > totalExpense ? "+8.5%" : "-2.3%",
-        isPositive: totalIncome > totalExpense,
-        icon: DollarSign,
-        color: "from-blue-500 to-cyan-500",
-        description: "Monthly net",
-      },
-      {
-        title: "Active Budgets",
-        value: `${
-          Object.keys(budgets).filter((key) => budgets[key] > 0).length
-        }`,
-        change: "+2",
-        isPositive: true,
-        icon: Target,
-        color: "from-purple-500 to-violet-500",
-        description: "Total categories",
-      },
-    ],
-    [totalIncome, totalExpense, budgets]
-  );
 
   // Recent activities
   const recentActivities = useMemo(
     () => [
       {
         id: 1,
-        action: "Transaction Added",
-        detail: transactions[0]
-          ? `${transactions[0].description || "Transaction"} - Rp ${(
-              transactions[0].amount || 0
-            ).toLocaleString("id-ID")}`
-          : "No recent transactions",
+        action: "Income Added",
+        detail: `Rp ${(totalIncome * 0.3).toLocaleString('id-ID')} added`,
         time: "10 min ago",
-        icon: CreditCard,
-        color: "text-green-500",
-        bgColor: "bg-green-500/20",
+        icon: TrendingUp,
+        color: "text-emerald-500",
+        bgColor: "bg-emerald-500/20",
       },
       {
         id: 2,
+        action: "Expense Recorded",
+        detail: `Rp ${(totalExpense * 0.2).toLocaleString('id-ID')} spent`,
+        time: "1 hour ago",
+        icon: TrendingDown,
+        color: "text-rose-500",
+        bgColor: "bg-rose-500/20",
+      },
+      {
+        id: 3,
         action: "Budget Updated",
         detail: budgetEntries[0]
           ? `${budgetEntries[0].category?.name} category updated`
           : "No budget set",
-        time: "1 hour ago",
+        time: "2 hours ago",
         icon: Target,
         color: "text-blue-500",
         bgColor: "bg-blue-500/20",
-      },
-      {
-        id: 3,
-        action: "Account Synced",
-        detail: "All accounts updated",
-        time: "2 hours ago",
-        icon: Wallet,
-        color: "text-purple-500",
-        bgColor: "bg-purple-500/20",
       },
       {
         id: 4,
@@ -206,7 +279,7 @@ const Dashboard = () => {
         bgColor: "bg-amber-500/20",
       },
     ],
-    [transactions, budgetEntries]
+    [totalIncome, totalExpense, budgetEntries]
   );
 
   // Quick Actions
@@ -214,28 +287,37 @@ const Dashboard = () => {
     {
       icon: Plus,
       label: "Add Income",
-      color: "from-green-500 to-emerald-500",
-      bg: "bg-green-500/20",
-      action: () => console.log("Add Income"),
+      color: "from-emerald-400 to-green-500",
+      bg: "bg-emerald-500/20",
+      action: () => {
+        console.log("Add Income");
+        triggerMoneyAnimation("income");
+      },
     },
     {
       icon: CreditCard,
       label: "Add Expense",
-      color: "from-red-500 to-rose-500",
-      bg: "bg-red-500/20",
-      action: () => console.log("Add Expense"),
+      color: "from-rose-400 to-red-500",
+      bg: "bg-rose-500/20",
+      action: () => {
+        console.log("Add Expense");
+        triggerMoneyAnimation("expense");
+      },
     },
     {
       icon: Target,
       label: "Set Budget",
-      color: "from-blue-500 to-cyan-500",
+      color: "from-blue-400 to-cyan-500",
       bg: "bg-blue-500/20",
-      action: () => console.log("Set Budget"),
+      action: () => {
+        console.log("Set Budget");
+        triggerMoneyAnimation("balance");
+      },
     },
     {
       icon: BarChart3,
       label: "View Reports",
-      color: "from-purple-500 to-violet-500",
+      color: "from-violet-400 to-purple-500",
       bg: "bg-purple-500/20",
       action: () => console.log("View Reports"),
     },
@@ -249,15 +331,16 @@ const Dashboard = () => {
     day: "numeric",
   });
 
-
-
   return (
-    <div className="min-h-screen pb-6">
+    <div className="min-h-screen pb-6 overflow-x-hidden">
+      {/* Animasi Money Particles */}
+      <FloatingMoney type={activeMoneyAnimation} isActive={!!activeMoneyAnimation} />
+
       {/* Header dengan Welcome & Date */}
-      <div className="sticky top-0 z-20 backdrop-blur-sm">
-        <div className={`px-4 sm:px-6 py-4 ${darkMode ? 'bg-gray-900/90' : 'bg-white/90'} border-b ${darkMode ? 'border-gray-800' : 'border-gray-200'}`}>
-          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
-            <div>
+      <div className="sticky top-0 z-30 backdrop-blur-xl">
+        <div className={`px-4 sm:px-6 lg:px-8 py-4 ${darkMode ? 'bg-gray-900/90' : 'bg-white/90'} border-b ${darkMode ? 'border-gray-800' : 'border-gray-200'}`}>
+          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 max-w-7xl mx-auto">
+            <div className="flex-1 min-w-0">
               <motion.div
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -279,7 +362,7 @@ const Dashboard = () => {
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
-                className={`text-2xl sm:text-3xl font-bold ${
+                className={`text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight ${
                   darkMode ? "text-white" : "text-gray-900"
                 }`}
               >
@@ -304,7 +387,7 @@ const Dashboard = () => {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.3 }}
-              className={`flex items-center gap-3 px-4 py-3 rounded-xl backdrop-blur-sm ${
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl backdrop-blur-sm flex-shrink-0 ${
                 darkMode
                   ? "bg-gray-800/50 border border-gray-700"
                   : "bg-white border border-gray-200"
@@ -334,18 +417,24 @@ const Dashboard = () => {
         </div>
       </div>
 
-      <div className="p-4 sm:p-6 space-y-6">
-        {/* Balance Cards dengan Toggle */}
+      <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto">
+        {/* Account Overview dengan Animasi WOW */}
         <div className="relative">
           <div className="flex items-center justify-between mb-4">
-            <h2
-              className={`text-lg sm:text-xl font-bold ${
+            <motion.h2
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className={`text-lg sm:text-xl lg:text-2xl font-bold ${
                 darkMode ? "text-white" : "text-gray-900"
               }`}
             >
               Account Overview
-            </h2>
-            <button
+            </motion.h2>
+            <motion.button
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               onClick={() => setShowBalance(!showBalance)}
               className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
                 darkMode
@@ -353,90 +442,59 @@ const Dashboard = () => {
                   : "hover:bg-gray-100 text-gray-600 hover:text-gray-900"
               }`}
             >
-            </button>
+            </motion.button>
           </div>
-          <CardBalance showBalance={showBalance} />
+          
+          {/* Card Balance dengan efek khusus */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="relative"
+          >
+            <CardBalance showBalance={showBalance} />
+            
+            {/* Floating coins animation around CardBalance */}
+            <AnimatePresence>
+              {showBalance && (
+                <>
+                  {[...Array(3)].map((_, i) => (
+                    <motion.div
+                      key={i}
+                      className={`absolute ${i % 2 === 0 ? 'text-emerald-400' : 'text-amber-400'}`}
+                      style={{
+                        left: `${20 + i * 20}%`,
+                        top: '-20px',
+                      }}
+                      initial={{ y: 0, opacity: 0, scale: 0 }}
+                      animate={{
+                        y: [-20, 0, -20],
+                        opacity: [0, 1, 0],
+                        scale: [0, 1, 0],
+                        rotate: 360,
+                      }}
+                      transition={{
+                        duration: 3,
+                        delay: i * 0.5,
+                        repeat: Infinity,
+                        ease: "easeInOut",
+                      }}
+                    >
+                      <Coins className="w-4 h-4" />
+                    </motion.div>
+                  ))}
+                </>
+              )}
+            </AnimatePresence>
+          </motion.div>
         </div>
 
-        {/* Quick Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-          {quickStats.map((stat, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-              whileHover={{ y: -4 }}
-              className={`rounded-2xl border p-4 sm:p-6 cursor-pointer transition-all duration-300 ${
-                darkMode
-                  ? "bg-gradient-to-br from-gray-800/50 to-gray-900/50 border-gray-700/50 hover:border-gray-600 hover:shadow-2xl hover:shadow-blue-900/20"
-                  : "bg-white border-gray-200 hover:border-gray-300 hover:shadow-xl hover:shadow-blue-500/10"
-              }`}
-            >
-              <div className="flex items-start justify-between mb-4">
-                <div className="relative">
-                  <div className="absolute inset-0 bg-gradient-to-br opacity-20 rounded-xl blur-lg" style={{
-                    backgroundImage: `linear-gradient(to bottom right, ${stat.color.split(' ')[1]}, ${stat.color.split(' ')[3]})`
-                  }}></div>
-                  <div className={`p-2.5 sm:p-3 rounded-xl backdrop-blur-sm ${
-                    darkMode ? 'bg-gray-800/50' : 'bg-white/50'
-                  }`}>
-                    <stat.icon className={`w-5 h-5 sm:w-6 sm:h-6 bg-gradient-to-br ${stat.color} bg-clip-text text-transparent`} />
-                  </div>
-                </div>
-                <div
-                  className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold ${
-                    stat.isPositive
-                      ? darkMode
-                        ? "bg-green-900/30 text-green-400 border border-green-800/50"
-                        : "bg-green-100 text-green-700 border border-green-200"
-                      : darkMode
-                      ? "bg-red-900/30 text-red-400 border border-red-800/50"
-                      : "bg-red-100 text-red-700 border border-red-200"
-                  }`}
-                >
-                  {stat.isPositive ? (
-                    <ArrowTrendingUp className="w-3 h-3" />
-                  ) : (
-                    <TrendingDown className="w-3 h-3" />
-                  )}
-                  <span>{stat.change}</span>
-                </div>
-              </div>
-
-              <div>
-                <p
-                  className={`text-xl sm:text-2xl font-bold ${
-                    darkMode ? "text-white" : "text-gray-900"
-                  } mb-1`}
-                >
-                  {stat.value}
-                </p>
-                <p
-                  className={`font-medium text-sm sm:text-base ${
-                    darkMode ? "text-gray-300" : "text-gray-700"
-                  } mb-2`}
-                >
-                  {stat.title}
-                </p>
-                <p
-                  className={`text-xs sm:text-sm ${
-                    darkMode ? "text-gray-500" : "text-gray-500"
-                  }`}
-                >
-                  {stat.description}
-                </p>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-
-        {/* Main Content Area - Charts, Budget, Currency */}
+        {/* Main Content Area */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Chart Section - Lebih besar (2 kolom) */}
+          {/* Chart Section */}
           <div className={`lg:col-span-2 rounded-2xl overflow-hidden ${
             darkMode
-              ? "bg-gradient-to-br from-gray-900/50 to-gray-800/50 border border-gray-700/50"
+              ? "bg-gray-900/50 border border-gray-700/50"
               : "bg-white border border-gray-200"
           } shadow-xl`}>
             <div className="p-4 sm:p-6">
@@ -445,7 +503,7 @@ const Dashboard = () => {
                   <h3 className={`text-lg sm:text-xl font-bold ${
                     darkMode ? "text-white" : "text-gray-900"
                   } mb-2`}>
-                    Monthly Spending Overview
+                    Financial Overview
                   </h3>
                   <p className={`text-sm ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
                     Track your spending patterns and trends
@@ -465,8 +523,8 @@ const Dashboard = () => {
                         className={`px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm capitalize transition-all ${
                           timeRange === range
                             ? darkMode
-                              ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg"
-                              : "bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg"
+                              ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white"
+                              : "bg-gradient-to-r from-blue-500 to-purple-500 text-white"
                             : darkMode
                             ? "text-gray-400 hover:text-white hover:bg-gray-700/50"
                             : "text-gray-600 hover:text-gray-900 hover:bg-gray-200"
@@ -485,17 +543,13 @@ const Dashboard = () => {
                         : "hover:bg-gray-100 text-gray-600 hover:text-gray-900"
                     }`}
                   >
-                    {showFullChart ? (
-                      <ChevronDown className="w-4 h-4 rotate-180" />
-                    ) : (
-                      <ChevronDown className="w-4 h-4" />
-                    )}
+                    <ChevronDown className={`w-4 h-4 transition-transform ${showFullChart ? "rotate-180" : ""}`} />
                   </button>
                 </div>
               </div>
 
-              {/* Chart Container - Ukuran diperbesar */}
-              <div className={`${showFullChart ? 'h-[400px]' : 'h-[350px]'} rounded-xl p-4 transition-all duration-300 ${
+              {/* Chart Container */}
+              <div className={`${showFullChart ? 'h-[400px]' : 'h-[300px] sm:h-[350px]'} rounded-xl p-4 transition-all duration-300 ${
                 darkMode ? 'bg-gray-800/30' : 'bg-gray-50'
               }`}>
                 <ChartSpending timeRange={timeRange} height={showFullChart ? 380 : 330} />
@@ -504,27 +558,27 @@ const Dashboard = () => {
               {/* Chart Legend */}
               <div className="flex flex-wrap gap-4 mt-6 pt-4 border-t border-gray-700/30">
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                  <div className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></div>
                   <span className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Income</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                  <div className="w-3 h-3 rounded-full bg-rose-500 animate-pulse"></div>
                   <span className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Expense</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                  <div className="w-3 h-3 rounded-full bg-blue-500 animate-pulse"></div>
                   <span className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Net Balance</span>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Sidebar Kanan - Budget & Currency */}
+          {/* Sidebar Kanan */}
           <div className="space-y-6">
-            {/* Budget Overview - Diperkecil */}
+            {/* Budget Overview */}
             <div className={`rounded-2xl overflow-hidden ${
               darkMode
-                ? "bg-gradient-to-br from-gray-900/50 to-gray-800/50 border border-gray-700/50"
+                ? "bg-gray-900/50 border border-gray-700/50"
                 : "bg-white border border-gray-200"
             } shadow-xl`}>
               <div className="p-4 sm:p-5">
@@ -537,13 +591,11 @@ const Dashboard = () => {
                       Track spending against budgets
                     </p>
                   </div>
-                  <button
-                    className={`p-2 rounded-lg transition-colors ${
-                      darkMode
-                        ? "hover:bg-gray-800 text-gray-400 hover:text-white"
-                        : "hover:bg-gray-100 text-gray-600 hover:text-gray-900"
-                    }`}
-                  >
+                  <button className={`p-2 rounded-lg transition-colors ${
+                    darkMode
+                      ? "hover:bg-gray-800 text-gray-400 hover:text-white"
+                      : "hover:bg-gray-100 text-gray-600 hover:text-gray-900"
+                  }`}>
                     <Plus className="w-4 h-4" />
                   </button>
                 </div>
@@ -553,7 +605,13 @@ const Dashboard = () => {
                     budgetEntries.map((item, index) => {
                       const { category, usage } = item;
                       return (
-                        <div key={category.id} className="space-y-2">
+                        <motion.div
+                          key={category.id}
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: index * 0.1 }}
+                          className="space-y-2"
+                        >
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                               <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
@@ -572,27 +630,32 @@ const Dashboard = () => {
                                 </p>
                               </div>
                             </div>
-                            <span className={`text-sm font-semibold ${
-                              usage.status === "over" ? "text-red-500" : 
-                              usage.status === "warning" ? "text-amber-500" : "text-green-500"
-                            }`}>
+                            <motion.span 
+                              whileHover={{ scale: 1.1 }}
+                              className={`text-sm font-semibold ${
+                                usage.status === "over" ? "text-rose-500" : 
+                                usage.status === "warning" ? "text-amber-500" : "text-emerald-500"
+                              }`}
+                            >
                               {usage.percentage.toFixed(0)}%
-                            </span>
+                            </motion.span>
                           </div>
                           
-                          <div className={`h-1.5 rounded-full overflow-hidden ${
+                          <div className={`h-2 rounded-full overflow-hidden ${
                             darkMode ? "bg-gray-700" : "bg-gray-200"
                           }`}>
-                            <div
-                              style={{ width: `${Math.min(usage.percentage, 100)}%` }}
+                            <motion.div
+                              initial={{ width: 0 }}
+                              animate={{ width: `${Math.min(usage.percentage, 100)}%` }}
+                              transition={{ duration: 1, delay: index * 0.2 }}
                               className={`h-full rounded-full ${
-                                usage.status === "over" ? "bg-gradient-to-r from-red-500 to-pink-500" :
+                                usage.status === "over" ? "bg-gradient-to-r from-rose-500 to-pink-500" :
                                 usage.status === "warning" ? "bg-gradient-to-r from-amber-500 to-orange-500" :
-                                "bg-gradient-to-r from-green-500 to-emerald-500"
+                                "bg-gradient-to-r from-emerald-500 to-green-500"
                               }`}
                             />
                           </div>
-                        </div>
+                        </motion.div>
                       );
                     })
                   ) : (
@@ -614,10 +677,10 @@ const Dashboard = () => {
               </div>
             </div>
 
-            {/* Currency Converter - Diperkecil */}
+            {/* Currency Converter */}
             <div className={`rounded-2xl overflow-hidden ${
               darkMode
-                ? "bg-gradient-to-br from-gray-900/50 to-gray-800/50 border border-gray-700/50"
+                ? "bg-gray-900/50 border border-gray-700/50"
                 : "bg-white border border-gray-200"
             } shadow-xl`}>
               <div className="p-4 sm:p-5">
@@ -644,22 +707,29 @@ const Dashboard = () => {
                   </button>
                 </div>
 
-                {!currencyCollapsed && (
-                  <div className="space-y-4">
-                    <CurrencyConverter compact={true} />
-                    <div className={`text-xs ${darkMode ? "text-gray-500" : "text-gray-600"} flex items-center gap-2`}>
-                      <RefreshCw className="w-3 h-3" />
-                      <span>Rates updated: Today 12:00 UTC</span>
-                    </div>
-                  </div>
-                )}
+                <AnimatePresence>
+                  {!currencyCollapsed && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="space-y-4 overflow-hidden"
+                    >
+                      <CurrencyConverter compact={true} />
+                      <div className={`text-xs ${darkMode ? "text-gray-500" : "text-gray-600"} flex items-center gap-2`}>
+                        <RefreshCw className="w-3 h-3" />
+                        <span>Rates updated: Today 12:00 UTC</span>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             </div>
 
             {/* Quick Actions */}
             <div className={`rounded-2xl overflow-hidden ${
               darkMode
-                ? "bg-gradient-to-br from-gray-900/50 to-gray-800/50 border border-gray-700/50"
+                ? "bg-gray-900/50 border border-gray-700/50"
                 : "bg-white border border-gray-200"
             } shadow-xl`}>
               <div className="p-4 sm:p-5">
@@ -672,7 +742,10 @@ const Dashboard = () => {
                     return (
                       <motion.button
                         key={index}
-                        whileHover={{ scale: 1.05 }}
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: index * 0.1 }}
+                        whileHover={{ scale: 1.05, y: -2 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={action.action}
                         className={`p-3 rounded-xl flex flex-col items-center justify-center gap-2 transition-all duration-300
@@ -682,11 +755,15 @@ const Dashboard = () => {
                               : "bg-gray-50 hover:bg-gray-100 border border-gray-200 hover:border-gray-300"
                           }`}
                       >
-                        <div className={`p-2 rounded-full ${action.bg}`}>
+                        <motion.div 
+                          className={`p-2 rounded-full ${action.bg}`}
+                          whileHover={{ rotate: 360 }}
+                          transition={{ duration: 0.5 }}
+                        >
                           <div className={`bg-gradient-to-br ${action.color} bg-clip-text text-transparent`}>
                             <Icon className="w-4 h-4" />
                           </div>
-                        </div>
+                        </motion.div>
                         <span className={`font-medium text-xs text-center ${
                           darkMode ? "text-gray-300" : "text-gray-700"
                         }`}>
@@ -701,139 +778,108 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Recent Activity & Recent Transactions */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Recent Activity */}
-          <div className={`rounded-2xl overflow-hidden ${
-            darkMode
-              ? "bg-gradient-to-br from-gray-900/50 to-gray-800/50 border border-gray-700/50"
-              : "bg-white border border-gray-200"
-          } shadow-xl`}>
-            <div className="p-4 sm:p-6">
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h3 className={`font-bold mb-2 ${darkMode ? "text-white" : "text-gray-900"}`}>
-                    Recent Activity
-                  </h3>
-                  <p className={`text-sm ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
-                    Latest updates from your account
-                  </p>
-                </div>
-                <div className="relative">
-                  <Bell className={`w-5 h-5 ${darkMode ? "text-blue-400" : "text-blue-500"}`} />
-                  <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
-                </div>
+        {/* Recent Activity */}
+        <div className={`rounded-2xl overflow-hidden ${
+          darkMode
+            ? "bg-gray-900/50 border border-gray-700/50"
+            : "bg-white border border-gray-200"
+        } shadow-xl`}>
+          <div className="p-4 sm:p-6">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h3 className={`font-bold mb-2 ${darkMode ? "text-white" : "text-gray-900"}`}>
+                  Recent Activity
+                </h3>
+                <p className={`text-sm ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
+                  Latest updates from your account
+                </p>
               </div>
-
-              <div className="space-y-3">
-                {recentActivities.map((activity) => {
-                  const Icon = activity.icon;
-                  return (
-                    <div
-                      key={activity.id}
-                      className={`flex items-start gap-3 p-3 rounded-xl transition-colors ${
-                        darkMode
-                          ? "hover:bg-gray-800/50"
-                          : "hover:bg-gray-50"
-                      }`}
-                    >
-                      <div className={`p-2 rounded-lg ${activity.bgColor} flex-shrink-0`}>
-                        <Icon className={`w-4 h-4 ${activity.color}`} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className={`font-medium text-sm ${darkMode ? "text-white" : "text-gray-900"}`}>
-                          {activity.action}
-                        </p>
-                        <p className={`text-xs ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
-                          {activity.detail}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-1 text-xs">
-                        <Clock className={`w-3 h-3 ${darkMode ? "text-gray-500" : "text-gray-400"}`} />
-                        <span className={darkMode ? "text-gray-500" : "text-gray-500"}>
-                          {activity.time}
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
+              <div className="relative">
+                <Bell className={`w-5 h-5 ${darkMode ? "text-blue-400" : "text-blue-500"}`} />
+                <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-rose-500 rounded-full animate-pulse"></span>
               </div>
             </div>
-          </div>
 
-          {/* Recent Transactions - Header saja */}
-          <div className={`rounded-2xl overflow-hidden ${
-            darkMode
-              ? "bg-gradient-to-br from-gray-900/50 to-gray-800/50 border border-gray-700/50"
-              : "bg-white border border-gray-200"
-          } shadow-xl`}>
-            <div className="p-4 sm:p-6">
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h3 className={`font-bold mb-2 ${darkMode ? "text-white" : "text-gray-900"}`}>
-                    Recent Transactions
-                  </h3>
-                  <p className={`text-sm ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
-                    Latest financial activities
-                  </p>
-                </div>
-                <button className={`px-3 py-2 rounded-lg text-sm flex items-center gap-2 ${
-                  darkMode
-                    ? "bg-gray-800 hover:bg-gray-700 text-gray-300"
-                    : "bg-gray-100 hover:bg-gray-200 text-gray-700"
-                }`}>
-                  View All
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              </div>
-              
-              <TransactionTable limit={3} />
+            <div className="space-y-3">
+              {recentActivities.map((activity, index) => {
+                const Icon = activity.icon;
+                return (
+                  <motion.div
+                    key={activity.id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    whileHover={{ x: 5 }}
+                    className={`flex items-start gap-3 p-3 rounded-xl transition-colors ${
+                      darkMode
+                        ? "hover:bg-gray-800/50"
+                        : "hover:bg-gray-50"
+                    }`}
+                  >
+                    <motion.div
+                      whileHover={{ rotate: 360 }}
+                      transition={{ duration: 0.5 }}
+                      className={`p-2 rounded-lg ${activity.bgColor} flex-shrink-0`}
+                    >
+                      <Icon className={`w-4 h-4 ${activity.color}`} />
+                    </motion.div>
+                    <div className="flex-1 min-w-0">
+                      <p className={`font-medium text-sm ${darkMode ? "text-white" : "text-gray-900"}`}>
+                        {activity.action}
+                      </p>
+                      <p className={`text-xs ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
+                        {activity.detail}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-1 text-xs">
+                      <Clock className={`w-3 h-3 ${darkMode ? "text-gray-500" : "text-gray-400"}`} />
+                      <span className={darkMode ? "text-gray-500" : "text-gray-500"}>
+                        {activity.time}
+                      </span>
+                    </div>
+                  </motion.div>
+                );
+              })}
             </div>
           </div>
         </div>
 
-        {/* Bottom Stats - Responsif */}
+        {/* Summary Stats */}
         <div className={`rounded-2xl p-4 sm:p-6 ${
           darkMode
             ? "bg-gradient-to-r from-blue-900/20 to-purple-900/20 border border-blue-700/30"
             : "bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200"
         }`}>
           <h3 className={`font-bold mb-4 ${darkMode ? "text-white" : "text-gray-900"}`}>
-            Summary Stats
+            Financial Summary
           </h3>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <div className="text-center">
-              <div className={`text-xl sm:text-2xl font-bold mb-1 ${darkMode ? "text-white" : "text-gray-900"}`}>
-                {walletTotals?.totalWallets || 0}
-              </div>
-              <div className={`text-xs sm:text-sm ${darkMode ? "text-gray-300" : "text-gray-700"}`}>
-                Wallets
-              </div>
-            </div>
-            <div className="text-center">
-              <div className={`text-xl sm:text-2xl font-bold mb-1 ${darkMode ? "text-white" : "text-gray-900"}`}>
-                {categories.length || 0}
-              </div>
-              <div className={`text-xs sm:text-sm ${darkMode ? "text-gray-300" : "text-gray-700"}`}>
-                Categories
-              </div>
-            </div>
-            <div className="text-center">
-              <div className={`text-xl sm:text-2xl font-bold mb-1 ${darkMode ? "text-white" : "text-gray-900"}`}>
-                {transactions.length || 0}
-              </div>
-              <div className={`text-xs sm:text-sm ${darkMode ? "text-gray-300" : "text-gray-700"}`}>
-                Transactions
-              </div>
-            </div>
-            <div className="text-center">
-              <div className={`text-xl sm:text-2xl font-bold mb-1 ${darkMode ? "text-white" : "text-gray-900"}`}>
-                {Object.keys(budgets).filter(key => budgets[key] > 0).length || 0}
-              </div>
-              <div className={`text-xs sm:text-sm ${darkMode ? "text-gray-300" : "text-gray-700"}`}>
-                Active Budgets
-              </div>
-            </div>
+            {[
+              { label: "Wallets", value: walletTotals?.totalWallets || 0, icon: Wallet },
+              { label: "Categories", value: categories.length || 0, icon: CreditCard },
+              { label: "Transactions", value: transactions.length || 0, icon: BarChart3 },
+              { label: "Active Budgets", value: Object.keys(budgets).filter(key => budgets[key] > 0).length || 0, icon: Target },
+            ].map((stat, index) => {
+              const Icon = stat.icon;
+              return (
+                <motion.div
+                  key={stat.label}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  whileHover={{ scale: 1.05 }}
+                  className="text-center"
+                >
+                  <div className={`text-xl sm:text-2xl font-bold mb-1 ${darkMode ? "text-white" : "text-gray-900"}`}>
+                    <AnimatedCounter value={stat.value} duration={1} prefix="" />
+                  </div>
+                  <div className={`text-xs sm:text-sm flex items-center justify-center gap-2 ${darkMode ? "text-gray-300" : "text-gray-700"}`}>
+                    <Icon className="w-3 h-3" />
+                    <span>{stat.label}</span>
+                  </div>
+                </motion.div>
+              );
+            })}
           </div>
         </div>
       </div>

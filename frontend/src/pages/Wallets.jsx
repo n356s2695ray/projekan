@@ -56,13 +56,63 @@ const Wallets = () => {
 
   const formatCurrency = (amount, currency = "IDR") => {
     const num = Number(amount);
-    if (!isFinite(num)) return "Rp 0";
+    if (!isFinite(num)) return currency === "IDR" ? "Rp 0" : "$0.00";
+
+    if (currency === "IDR") {
+      // Format untuk IDR tanpa desimal
+      if (Math.abs(num) >= 1000000000) {
+        return `Rp ${(num / 1000000000).toFixed(2)}B`;
+      }
+      if (Math.abs(num) >= 1000000) {
+        return `Rp ${(num / 1000000).toFixed(2)}M`;
+      }
+      if (Math.abs(num) >= 1000) {
+        return `Rp ${(num / 1000).toFixed(1)}K`;
+      }
+      return `Rp ${Math.round(num).toLocaleString("id-ID")}`;
+    }
+
+    // Format untuk mata uang lain
+    if (Math.abs(num) >= 1000000) {
+      return (
+        new Intl.NumberFormat("en-US", {
+          style: "currency",
+          currency: currency,
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 2,
+        }).format(num / 1000000) + "M"
+      );
+    }
+
+    if (Math.abs(num) >= 1000) {
+      return (
+        new Intl.NumberFormat("en-US", {
+          style: "currency",
+          currency: currency,
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 1,
+        }).format(num / 1000) + "K"
+      );
+    }
+
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: currency,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(num);
+  };
+
+  const formatFullCurrency = (amount, currency = "IDR") => {
+    const num = Number(amount);
+    if (!isFinite(num)) return currency === "IDR" ? "Rp 0" : "$0.00";
 
     if (currency === "IDR") {
       return new Intl.NumberFormat("id-ID", {
         style: "currency",
         currency: "IDR",
         minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
       }).format(num);
     }
 
@@ -70,6 +120,7 @@ const Wallets = () => {
       style: "currency",
       currency: currency,
       minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
     }).format(num);
   };
 
@@ -279,12 +330,12 @@ const Wallets = () => {
               : "from-purple-500/10 via-white to-pink-500/10"
           }`}
         ></div>
-        <div className="relative p-8">
-          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between">
-            <div className="mb-6 lg:mb-0">
-              <div className="flex items-center space-x-4 mb-4">
+        <div className="relative p-6 sm:p-8">
+          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+            <div className="flex-1 min-w-0">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-4">
                 <div
-                  className={`p-3 rounded-2xl backdrop-blur-sm border transition-colors ${
+                  className={`p-3 rounded-2xl backdrop-blur-sm border transition-colors shrink-0 ${
                     isDarkMode
                       ? "bg-white/5 border-white/10"
                       : "bg-white/80 border-white/20 shadow-lg"
@@ -296,16 +347,16 @@ const Wallets = () => {
                     }`}
                   />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <h1
-                    className={`text-3xl font-bold transition-colors ${
+                    className={`text-2xl sm:text-3xl font-bold transition-colors truncate ${
                       isDarkMode ? "text-white" : "text-gray-900"
                     }`}
                   >
                     Wallet Management
                   </h1>
                   <p
-                    className={`mt-2 text-lg transition-colors ${
+                    className={`mt-1 sm:mt-2 text-base sm:text-lg transition-colors ${
                       isDarkMode ? "text-gray-300" : "text-gray-600"
                     }`}
                   >
@@ -317,13 +368,13 @@ const Wallets = () => {
 
             <button
               onClick={() => setShowAddWallet(true)}
-              className="group relative px-8 py-4 bg-gradient-to-r from-purple-600 via-purple-500 to-pink-500 
+              className="group relative w-full sm:w-auto px-6 py-3 sm:px-8 sm:py-4 bg-gradient-to-r from-purple-600 via-purple-500 to-pink-500 
                 text-white rounded-2xl hover:shadow-2xl transition-all duration-300 
-                hover:scale-105 flex items-center space-x-3 font-semibold overflow-hidden"
+                hover:scale-105 flex items-center justify-center sm:justify-start space-x-3 font-semibold overflow-hidden"
             >
               <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
               <Plus className="w-5 h-5 relative z-10" />
-              <span className="relative z-10">Add New Wallet</span>
+              <span className="relative z-10 truncate">Add New Wallet</span>
             </button>
           </div>
         </div>
@@ -338,73 +389,78 @@ const Wallets = () => {
               : "from-purple-600 via-pink-500 to-purple-700"
           }`}
         ></div>
-        <div className="relative p-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div>
-              <div className="flex items-center space-x-3 mb-4">
+        <div className="relative p-6 sm:p-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
+            <div className="space-y-4">
+              <div className="flex items-center space-x-3">
                 <div className="p-3 rounded-2xl bg-white/20 backdrop-blur-sm border border-white/20">
-                  <Shield className="w-7 h-7 text-white" />
+                  <Shield className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
                 </div>
-                <span className="text-white/90 font-medium text-lg">
+                <span className="text-white/90 font-medium text-base sm:text-lg">
                   Total Balance
                 </span>
               </div>
-              <h2 className="text-4xl lg:text-5xl font-bold text-white mb-3">
-                {formatCurrency(walletTotals?.totalBalance || 0)}
-              </h2>
+              <div className="space-y-2">
+                <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white leading-tight break-all">
+                  {formatCurrency(walletTotals?.totalBalance || 0)}
+                </h2>
+                <p className="text-white/70 text-sm sm:text-base break-words">
+                  Full amount:{" "}
+                  {formatFullCurrency(walletTotals?.totalBalance || 0)}
+                </p>
+              </div>
               <div className="flex items-center space-x-3">
                 <TrendingUp className="w-5 h-5 text-emerald-300" />
-                <span className="text-emerald-300 font-medium">
+                <span className="text-emerald-300 font-medium text-sm sm:text-base">
                   Total across {wallets.length} wallets
                 </span>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-              <div className="p-5 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20">
-                <div className="text-2xl font-bold text-white">
-                  {formatCurrency(walletTotals?.totalAssets || 0)}
-                </div>
-                <div className="text-white/80 text-sm mt-1">Total Assets</div>
-                <div className="flex items-center mt-2">
-                  <div className="w-full h-1 bg-white/20 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-emerald-400 rounded-full"
-                      style={{ width: "85%" }}
-                    ></div>
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+              {[
+                {
+                  label: "Total Assets",
+                  value: walletTotals?.totalAssets || 0,
+                  color: "bg-emerald-400",
+                  width: "85%",
+                },
+                {
+                  label: "Credit Used",
+                  value: walletTotals?.creditUsed || 0,
+                  color: "bg-red-400",
+                  width: "24%",
+                },
+                {
+                  label: "Total Wallets",
+                  value: wallets.length,
+                  color: "bg-blue-400",
+                  width: "100%",
+                },
+              ].map((item, index) => (
+                <div
+                  key={index}
+                  className="p-4 sm:p-5 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20"
+                >
+                  <div className="text-xl sm:text-2xl font-bold text-white truncate">
+                    {typeof item.value === "number" &&
+                    item.label !== "Total Wallets"
+                      ? formatCurrency(item.value)
+                      : item.value}
+                  </div>
+                  <div className="text-white/80 text-xs sm:text-sm mt-1 truncate">
+                    {item.label}
+                  </div>
+                  <div className="flex items-center mt-2">
+                    <div className="w-full h-1 bg-white/20 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full ${item.color} rounded-full`}
+                        style={{ width: item.width }}
+                      ></div>
+                    </div>
                   </div>
                 </div>
-              </div>
-
-              <div className="p-5 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20">
-                <div className="text-2xl font-bold text-white">
-                  {formatCurrency(walletTotals?.creditUsed || 0)}
-                </div>
-                <div className="text-white/80 text-sm mt-1">Credit Used</div>
-                <div className="flex items-center mt-2">
-                  <div className="w-full h-1 bg-white/20 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-red-400 rounded-full"
-                      style={{ width: "24%" }}
-                    ></div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="p-5 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20">
-                <div className="text-2xl font-bold text-white">
-                  {wallets.length}
-                </div>
-                <div className="text-white/80 text-sm mt-1">Total Wallets</div>
-                <div className="flex items-center mt-2">
-                  <div className="w-full h-1 bg-white/20 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-blue-400 rounded-full"
-                      style={{ width: "100%" }}
-                    ></div>
-                  </div>
-                </div>
-              </div>
+              ))}
             </div>
           </div>
         </div>
@@ -412,17 +468,17 @@ const Wallets = () => {
 
       {/* Wallet Grid */}
       <div>
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6">
-          <div>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+          <div className="min-w-0">
             <h2
-              className={`text-2xl font-bold transition-colors ${
+              className={`text-xl sm:text-2xl font-bold transition-colors truncate ${
                 isDarkMode ? "text-white" : "text-gray-900"
               }`}
             >
               Your Wallets
             </h2>
             <p
-              className={`mt-1 transition-colors ${
+              className={`mt-1 transition-colors text-sm sm:text-base ${
                 isDarkMode ? "text-gray-400" : "text-gray-600"
               }`}
             >
@@ -430,12 +486,12 @@ const Wallets = () => {
               {sortedWallets.filter((w) => w.status === "active").length} active
             </p>
           </div>
-          <div className="flex items-center space-x-3 mt-3 sm:mt-0">
-            <div className="relative">
+          <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
+            <div className="relative flex-1 sm:flex-none min-w-0">
               <select
                 value={activeFilter}
                 onChange={(e) => setActiveFilter(e.target.value)}
-                className={`pl-10 pr-4 py-2 rounded-xl transition-all duration-300 appearance-none ${
+                className={`w-full px-9 sm:px-10 pr-3 sm:pr-4 py-2 rounded-xl transition-all duration-300 appearance-none truncate ${
                   isDarkMode
                     ? "bg-gray-800 hover:bg-gray-700 text-gray-300"
                     : "bg-gray-100 hover:bg-gray-200 text-gray-700"
@@ -454,11 +510,11 @@ const Wallets = () => {
               />
             </div>
 
-            <div className="relative">
+            <div className="relative flex-1 sm:flex-none min-w-0">
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className={`pl-10 pr-4 py-2 rounded-xl transition-all duration-300 appearance-none ${
+                className={`w-full px-9 sm:px-10 pr-3 sm:pr-4 py-2 rounded-xl transition-all duration-300 appearance-none truncate ${
                   isDarkMode
                     ? "bg-gray-800 hover:bg-gray-700 text-gray-300"
                     : "bg-gray-100 hover:bg-gray-200 text-gray-700"
@@ -504,7 +560,7 @@ const Wallets = () => {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
             {sortedWallets.map((wallet) => {
               const Icon = getWalletIcon(wallet.type);
               const colorClasses = getWalletColor(wallet.type);
@@ -513,27 +569,31 @@ const Wallets = () => {
               return (
                 <div
                   key={wallet.id}
-                  className={`rounded-2xl border p-6 transition-all duration-300 hover:scale-[1.02] ${
+                  className={`rounded-2xl border p-4 sm:p-6 transition-all duration-300 hover:scale-[1.02] min-w-0 ${
                     isDarkMode
                       ? "bg-gray-800/50 border-gray-700 hover:border-gray-600"
                       : "bg-white border-gray-200 hover:border-gray-300"
                   }`}
                 >
-                  <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center space-x-3">
-                      <div className={`p-3 rounded-xl ${bgColor}`}>
-                        <Icon className={`w-6 h-6 ${textColor}`} />
+                  <div className="flex items-center justify-between mb-4 sm:mb-6">
+                    <div className="flex items-center space-x-3 min-w-0">
+                      <div
+                        className={`p-2 sm:p-3 rounded-xl ${bgColor} shrink-0`}
+                      >
+                        <Icon
+                          className={`w-5 h-5 sm:w-6 sm:h-6 ${textColor}`}
+                        />
                       </div>
-                      <div>
+                      <div className="min-w-0">
                         <h3
-                          className={`font-bold transition-colors ${
+                          className={`font-bold text-sm sm:text-base transition-colors truncate ${
                             isDarkMode ? "text-white" : "text-gray-900"
                           }`}
                         >
                           {wallet.name}
                         </h3>
                         <p
-                          className={`text-sm transition-colors ${
+                          className={`text-xs sm:text-sm transition-colors truncate ${
                             isDarkMode ? "text-gray-400" : "text-gray-600"
                           }`}
                         >
@@ -544,20 +604,20 @@ const Wallets = () => {
                     </div>
                     <button
                       onClick={() => setSelectedWallet(wallet)}
-                      className={`p-2 rounded-lg hover:opacity-80 transition-colors ${
+                      className={`p-1.5 sm:p-2 rounded-lg hover:opacity-80 transition-colors shrink-0 ${
                         isDarkMode
                           ? "text-gray-400 hover:text-white"
                           : "text-gray-600 hover:text-gray-900"
                       }`}
                     >
-                      <MoreVertical className="w-5 h-5" />
+                      <MoreVertical className="w-4 h-4 sm:w-5 sm:h-5" />
                     </button>
                   </div>
 
-                  <div className="mb-6">
-                    <div className="text-3xl font-bold mb-2">
+                  <div className="mb-4 sm:mb-6">
+                    <div className="mb-1">
                       <span
-                        className={`transition-colors ${
+                        className={`text-2xl sm:text-3xl font-bold transition-colors break-all ${
                           isDarkMode ? "text-white" : "text-gray-900"
                         }`}
                       >
@@ -565,25 +625,32 @@ const Wallets = () => {
                       </span>
                     </div>
                     <div
-                      className={`text-sm transition-colors ${
+                      className={`text-xs sm:text-sm transition-colors ${
                         isDarkMode ? "text-gray-400" : "text-gray-600"
                       }`}
                     >
-                      Current Balance
+                      <div className="truncate">Current Balance</div>
+                      <div className="text-xs opacity-75 mt-0.5">
+                        Full:{" "}
+                        {formatFullCurrency(
+                          wallet.balance || 0,
+                          wallet.currency
+                        )}
+                      </div>
                     </div>
                   </div>
 
-                  <div className="space-y-3">
+                  <div className="space-y-2 sm:space-y-3">
                     <div className="flex items-center justify-between">
                       <span
-                        className={`text-sm transition-colors ${
+                        className={`text-xs sm:text-sm transition-colors truncate ${
                           isDarkMode ? "text-gray-400" : "text-gray-600"
                         }`}
                       >
                         Account Number
                       </span>
                       <span
-                        className={`transition-colors ${
+                        className={`text-xs sm:text-sm font-medium transition-colors truncate ml-2 text-right max-w-[50%] ${
                           isDarkMode ? "text-gray-300" : "text-gray-700"
                         }`}
                       >
@@ -592,14 +659,14 @@ const Wallets = () => {
                     </div>
                     <div className="flex items-center justify-between">
                       <span
-                        className={`text-sm transition-colors ${
+                        className={`text-xs sm:text-sm transition-colors ${
                           isDarkMode ? "text-gray-400" : "text-gray-600"
                         }`}
                       >
                         Status
                       </span>
                       <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium transition-colors ${
+                        className={`px-2 py-1 rounded-full text-xs font-medium shrink-0 ${
                           wallet.status === "active"
                             ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
                             : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
@@ -611,14 +678,14 @@ const Wallets = () => {
                     {wallet.type === "credit" && wallet.credit_limit && (
                       <div className="flex items-center justify-between">
                         <span
-                          className={`text-sm transition-colors ${
+                          className={`text-xs sm:text-sm transition-colors truncate ${
                             isDarkMode ? "text-gray-400" : "text-gray-600"
                           }`}
                         >
                           Credit Limit
                         </span>
                         <span
-                          className={`transition-colors ${
+                          className={`text-xs sm:text-sm font-medium transition-colors truncate ml-2 text-right ${
                             isDarkMode ? "text-gray-300" : "text-gray-700"
                           }`}
                         >
@@ -633,7 +700,7 @@ const Wallets = () => {
 
             {/* Add New Wallet Card */}
             <div
-              className={`relative rounded-3xl border-2 border-dashed overflow-hidden group transition-all duration-500 hover:scale-[1.02] ${
+              className={`relative rounded-2xl sm:rounded-3xl border-2 border-dashed overflow-hidden group transition-all duration-500 hover:scale-[1.02] min-h-[280px] sm:min-h-[300px] ${
                 isDarkMode
                   ? "border-gray-700 hover:border-purple-500/50"
                   : "border-gray-300 hover:border-purple-400"
@@ -648,17 +715,17 @@ const Wallets = () => {
               ></div>
               <button
                 onClick={() => setShowAddWallet(true)}
-                className="relative w-full h-full min-h-[300px] flex flex-col items-center justify-center p-8"
+                className="relative w-full h-full flex flex-col items-center justify-center p-6 sm:p-8"
               >
                 <div
-                  className={`relative w-24 h-24 rounded-2xl mb-6 flex items-center justify-center transition-all duration-500 group-hover:scale-110 group-hover:shadow-2xl ${
+                  className={`relative w-20 h-20 sm:w-24 sm:h-24 rounded-2xl mb-4 sm:mb-6 flex items-center justify-center transition-all duration-500 group-hover:scale-110 group-hover:shadow-2xl ${
                     isDarkMode
                       ? "bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700"
                       : "bg-gradient-to-br from-white to-gray-50 border border-gray-200"
                   }`}
                 >
                   <Plus
-                    className={`w-12 h-12 transition-all duration-500 ${
+                    className={`w-10 h-10 sm:w-12 sm:h-12 transition-all duration-500 ${
                       isDarkMode
                         ? "text-gray-400 group-hover:text-purple-400"
                         : "text-gray-400 group-hover:text-purple-600"
@@ -667,7 +734,7 @@ const Wallets = () => {
                   <div className="absolute inset-0 rounded-2xl border-2 border-dashed border-gray-400/0 group-hover:border-purple-500/50 transition-all duration-500"></div>
                 </div>
                 <h3
-                  className={`text-xl font-bold mb-3 transition-colors duration-300 ${
+                  className={`text-lg sm:text-xl font-bold mb-2 sm:mb-3 transition-colors duration-300 text-center ${
                     isDarkMode
                       ? "text-gray-300 group-hover:text-white"
                       : "text-gray-700 group-hover:text-gray-900"
@@ -676,7 +743,7 @@ const Wallets = () => {
                   Add New Wallet
                 </h3>
                 <p
-                  className={`text-sm text-center max-w-xs transition-colors duration-300 ${
+                  className={`text-xs sm:text-sm text-center max-w-xs transition-colors duration-300 px-2 ${
                     isDarkMode
                       ? "text-gray-500 group-hover:text-gray-400"
                       : "text-gray-600 group-hover:text-gray-700"
@@ -698,8 +765,8 @@ const Wallets = () => {
             : "bg-gradient-to-br from-white to-gray-50/80"
         } shadow-xl`}
       >
-        <div className="p-8">
-          <div className="flex items-center space-x-3 mb-8">
+        <div className="p-6 sm:p-8">
+          <div className="flex items-center space-x-3 mb-6 sm:mb-8">
             <div
               className={`p-3 rounded-2xl ${
                 isDarkMode
@@ -708,21 +775,21 @@ const Wallets = () => {
               }`}
             >
               <PieChart
-                className={`w-7 h-7 transition-colors ${
+                className={`w-6 h-6 sm:w-7 sm:h-7 transition-colors ${
                   isDarkMode ? "text-purple-400" : "text-purple-600"
                 }`}
               />
             </div>
-            <div>
+            <div className="min-w-0">
               <h3
-                className={`text-2xl font-bold transition-colors ${
+                className={`text-xl sm:text-2xl font-bold transition-colors truncate ${
                   isDarkMode ? "text-white" : "text-gray-900"
                 }`}
               >
                 Quick Transfer
               </h3>
               <p
-                className={`mt-1 transition-colors ${
+                className={`mt-1 text-sm sm:text-base transition-colors truncate ${
                   isDarkMode ? "text-gray-400" : "text-gray-600"
                 }`}
               >
@@ -731,10 +798,10 @@ const Wallets = () => {
             </div>
           </div>
 
-          <div className="space-y-5">
+          <div className="space-y-4 sm:space-y-5">
             <div>
               <label
-                className={`block text-sm font-medium mb-3 transition-colors ${
+                className={`block text-sm font-medium mb-2 sm:mb-3 transition-colors ${
                   isDarkMode ? "text-gray-300" : "text-gray-700"
                 }`}
               >
@@ -745,7 +812,7 @@ const Wallets = () => {
                   name="from_wallet_id"
                   value={transferData.from_wallet_id}
                   onChange={handleTransferChange}
-                  className={`w-full px-4 py-4 rounded-xl appearance-none transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-purple-500/20 ${
+                  className={`w-full px-4 py-3 sm:py-4 rounded-xl appearance-none transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-purple-500/20 text-sm sm:text-base ${
                     isDarkMode
                       ? "bg-gray-800/50 border border-gray-700 text-gray-300 hover:border-gray-600 focus:border-purple-500"
                       : "bg-white/50 border border-gray-300 text-gray-700 hover:border-gray-400 focus:border-purple-400"
@@ -760,7 +827,7 @@ const Wallets = () => {
                   ))}
                 </select>
                 <ChevronDown
-                  className={`absolute right-4 top-1/2 transform -translate-y-1/2 w-5 h-5 transition-colors ${
+                  className={`absolute right-4 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 transition-colors ${
                     isDarkMode ? "text-gray-500" : "text-gray-400"
                   }`}
                 />
@@ -769,7 +836,7 @@ const Wallets = () => {
 
             <div>
               <label
-                className={`block text-sm font-medium mb-3 transition-colors ${
+                className={`block text-sm font-medium mb-2 sm:mb-3 transition-colors ${
                   isDarkMode ? "text-gray-300" : "text-gray-700"
                 }`}
               >
@@ -780,7 +847,7 @@ const Wallets = () => {
                   name="to_wallet_id"
                   value={transferData.to_wallet_id}
                   onChange={handleTransferChange}
-                  className={`w-full px-4 py-4 rounded-xl appearance-none transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-purple-500/20 ${
+                  className={`w-full px-4 py-3 sm:py-4 rounded-xl appearance-none transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-purple-500/20 text-sm sm:text-base ${
                     isDarkMode
                       ? "bg-gray-800/50 border border-gray-700 text-gray-300 hover:border-gray-600 focus:border-purple-500"
                       : "bg-white/50 border border-gray-300 text-gray-700 hover:border-gray-400 focus:border-purple-400"
@@ -794,7 +861,7 @@ const Wallets = () => {
                   ))}
                 </select>
                 <ChevronDown
-                  className={`absolute right-4 top-1/2 transform -translate-y-1/2 w-5 h-5 transition-colors ${
+                  className={`absolute right-4 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 transition-colors ${
                     isDarkMode ? "text-gray-500" : "text-gray-400"
                   }`}
                 />
@@ -803,7 +870,7 @@ const Wallets = () => {
 
             <div>
               <label
-                className={`block text-sm font-medium mb-3 transition-colors ${
+                className={`block text-sm font-medium mb-2 sm:mb-3 transition-colors ${
                   isDarkMode ? "text-gray-300" : "text-gray-700"
                 }`}
               >
@@ -816,7 +883,7 @@ const Wallets = () => {
                   value={transferData.amount || ""}
                   onChange={handleTransferChange}
                   placeholder="Enter amount"
-                  className={`w-full px-4 py-4 rounded-xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-purple-500/20 ${
+                  className={`w-full px-4 py-3 sm:py-4 rounded-xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-purple-500/20 text-sm sm:text-base ${
                     isDarkMode
                       ? "bg-gray-800/50 border border-gray-700 text-gray-300 placeholder-gray-500 hover:border-gray-600 focus:border-purple-500"
                       : "bg-white/50 border border-gray-300 text-gray-700 placeholder-gray-400 hover:border-gray-400 focus:border-purple-400"
@@ -827,7 +894,7 @@ const Wallets = () => {
 
             <div>
               <label
-                className={`block text-sm font-medium mb-3 transition-colors ${
+                className={`block text-sm font-medium mb-2 sm:mb-3 transition-colors ${
                   isDarkMode ? "text-gray-300" : "text-gray-700"
                 }`}
               >
@@ -839,7 +906,7 @@ const Wallets = () => {
                 value={transferData.description || ""}
                 onChange={handleTransferChange}
                 placeholder="e.g., Transfer for groceries"
-                className={`w-full px-4 py-4 rounded-xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-purple-500/20 ${
+                className={`w-full px-4 py-3 sm:py-4 rounded-xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-purple-500/20 text-sm sm:text-base ${
                   isDarkMode
                     ? "bg-gray-800/50 border border-gray-700 text-gray-300 placeholder-gray-500 hover:border-gray-600 focus:border-purple-500"
                     : "bg-white/50 border border-gray-300 text-gray-700 placeholder-gray-400 hover:border-gray-400 focus:border-purple-400"
@@ -850,7 +917,7 @@ const Wallets = () => {
             <button
               onClick={handleTransfer}
               disabled={isTransferring || refreshing}
-              className={`w-full px-6 py-4 rounded-xl transition-all duration-300 font-semibold flex items-center justify-center space-x-2 ${
+              className={`w-full px-4 sm:px-6 py-3 sm:py-4 rounded-xl transition-all duration-300 font-semibold flex items-center justify-center space-x-2 text-sm sm:text-base ${
                 isTransferring || refreshing
                   ? "bg-gray-400 cursor-not-allowed"
                   : "bg-gradient-to-r from-purple-600 to-pink-500 hover:opacity-90 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]"
@@ -858,13 +925,13 @@ const Wallets = () => {
             >
               {isTransferring || refreshing ? (
                 <>
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                   <span>Processing...</span>
                 </>
               ) : (
                 <>
                   <span>Transfer Now</span>
-                  <ArrowUpRight className="w-5 h-5" />
+                  <ArrowUpRight className="w-4 h-4 sm:w-5 sm:h-5" />
                 </>
               )}
             </button>

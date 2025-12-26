@@ -2,7 +2,21 @@ import { useState, useEffect } from "react";
 import { loginUser } from "../services/authApi";
 import { useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Eye, EyeOff, Lock, Mail, LogIn, Shield } from "lucide-react";
+import { 
+  Eye, 
+  EyeOff, 
+  Lock, 
+  Mail, 
+  LogIn, 
+  Shield, 
+  TrendingUp, 
+  DollarSign, 
+  CreditCard, 
+  PieChart,
+  BarChart3,
+  DollarSignIcon,
+  Smartphone
+} from "lucide-react";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -38,71 +52,177 @@ const Login = () => {
 
       navigate("/dashboard", { replace: true });
     } catch (err) {
-      setError(err.response?.data?.message || "Login gagal");
+      setError(err.response?.data?.message || "Login failed. Please check your credentials.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Animated Background Elements */}
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-emerald-950 to-slate-950 flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Animated Finance Background Elements */}
       <div className="absolute inset-0 overflow-hidden">
-        {[...Array(20)].map((_, i) => (
+        {/* Floating Currency Symbols */}
+        {["$", "€", "£", "¥", "₹"].map((symbol, i) => (
           <motion.div
             key={i}
-            className="absolute w-1 h-1 bg-purple-400/30 rounded-full"
+            className="absolute text-2xl text-emerald-400/20 font-bold"
             animate={{
-              y: [0, -100],
-              opacity: [0, 1, 0],
+              y: [0, -window.innerHeight],
+              x: [0, Math.random() * 100 - 50],
+              rotate: [0, 360],
             }}
             transition={{
-              duration: 3 + Math.random() * 2,
+              duration: 15 + Math.random() * 10,
               repeat: Infinity,
-              delay: i * 0.1,
+              delay: i * 2,
+              ease: "linear"
             }}
             style={{
-              left: `${Math.random() * 100}%`,
+              left: `${10 + i * 20}%`,
               top: "100%",
             }}
-          />
+          >
+            {symbol}
+          </motion.div>
         ))}
+
+        {/* Animated Graph Lines */}
+        <motion.div
+          className="absolute top-1/4 left-10 w-20 h-20 border-t-2 border-r-2 border-emerald-500/30 rounded-tr-xl"
+          animate={{
+            pathLength: [0, 1],
+            opacity: [0.3, 0.7, 0.3],
+          }}
+          transition={{
+            duration: 8,
+            repeat: Infinity,
+            repeatType: "reverse"
+          }}
+        />
+        
+        <motion.div
+          className="absolute bottom-1/4 right-10 w-24 h-16 border-b-2 border-l-2 border-cyan-500/30 rounded-bl-xl"
+          animate={{
+            pathLength: [0, 1],
+            opacity: [0.3, 0.7, 0.3],
+          }}
+          transition={{
+            duration: 6,
+            repeat: Infinity,
+            repeatType: "reverse",
+            delay: 1
+          }}
+        />
+
+        {/* Floating Finance Icons */}
+        <motion.div
+          className="absolute top-1/3 right-1/4"
+          animate={{
+            y: [0, -30, 0],
+            rotate: [0, 5, 0, -5, 0],
+          }}
+          transition={{
+            duration: 8,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        >
+          <CreditCard className="w-8 h-8 text-emerald-400/20" />
+        </motion.div>
+
+        <motion.div
+          className="absolute bottom-1/3 left-1/4"
+          animate={{
+            y: [0, 30, 0],
+            rotate: [0, -5, 0, 5, 0],
+          }}
+          transition={{
+            duration: 7,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: 0.5
+          }}
+        >
+          <PieChart className="w-8 h-8 text-cyan-400/20" />
+        </motion.div>
       </div>
 
+      {/* Mobile Device Frame for Demo */}
       <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
+        className="absolute hidden lg:block top-10 right-10 w-64 h-96 bg-slate-900/30 backdrop-blur-sm rounded-3xl border border-emerald-500/20 p-4 shadow-2xl"
+        initial={{ opacity: 0, x: 50 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: 0.3 }}
+      >
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 bg-emerald-500 rounded-full"></div>
+            <span className="text-xs text-emerald-300">Secure</span>
+          </div>
+          <Smartphone className="w-5 h-5 text-slate-400" />
+        </div>
+        <div className="space-y-3">
+          <div className="h-2 bg-emerald-900/50 rounded-full"></div>
+          <div className="h-2 bg-emerald-900/50 rounded-full w-3/4"></div>
+          <div className="h-2 bg-emerald-900/50 rounded-full w-1/2"></div>
+          <div className="h-16 bg-gradient-to-r from-emerald-900/30 to-cyan-900/30 rounded-xl mt-4"></div>
+        </div>
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
         transition={{ duration: 0.5 }}
         className="relative w-full max-w-md"
       >
-        <div className="bg-white/5 backdrop-blur-xl rounded-3xl border border-white/10 shadow-2xl p-8">
+        <div className="bg-gradient-to-br from-slate-900/90 via-slate-900/80 to-slate-900/90 backdrop-blur-xl rounded-3xl border border-emerald-500/20 shadow-2xl p-6 md:p-8 relative overflow-hidden">
+          {/* Glow Effect */}
+          <div className="absolute -top-20 -right-20 w-40 h-40 bg-emerald-500/10 rounded-full blur-3xl"></div>
+          <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-cyan-500/10 rounded-full blur-3xl"></div>
+
           {/* Logo Section */}
-          <div className="text-center mb-10">
-            <motion.div
-              initial={{ y: -20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.2 }}
-              className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl mb-6 shadow-lg shadow-purple-500/30"
-            >
-              <Shield className="w-10 h-10 text-white" />
-            </motion.div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-300 to-pink-300 bg-clip-text text-transparent">
-              Welcome Back
+          <motion.div
+            initial={{ y: -20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.2 }}
+            className="text-center mb-8 md:mb-10"
+          >
+            <div className="inline-flex items-center justify-center w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-emerald-500 to-cyan-500 rounded-2xl mb-4 md:mb-6 shadow-lg shadow-emerald-500/30 relative">
+              <DollarSignIcon className="w-8 h-8 md:w-10 md:h-10 text-white" />
+              <motion.div
+                className="absolute -inset-1 bg-emerald-500/30 rounded-2xl blur-md"
+                animate={{
+                  scale: [1, 1.1, 1],
+                  opacity: [0.5, 0.8, 0.5],
+                }}
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                  ease: "easeInOut"
+                }}
+              />
+            </div>
+            <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-emerald-300 to-cyan-300 bg-clip-text text-transparent">
+              Rcane'tFinance
             </h1>
-            <p className="text-slate-300 mt-2">Sign in to your account</p>
-          </div>
+            <p className="text-slate-300 mt-2 text-sm md:text-base">Secure access to your financial dashboard</p>
+          </motion.div>
 
           {error && (
             <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="mb-6 p-3 md:p-4 bg-red-500/10 border border-red-500/20 rounded-xl backdrop-blur-sm"
             >
-              <p className="text-red-300 text-sm text-center">{error}</p>
+              <div className="flex items-center justify-center gap-2">
+                <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                <p className="text-red-300 text-sm text-center">{error}</p>
+              </div>
             </motion.div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-300 flex items-center gap-2">
                 <Mail className="w-4 h-4" />
@@ -115,10 +235,10 @@ const Login = () => {
                   value={form.email}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-3 pl-12 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300"
-                  placeholder="you@example.com"
+                  className="w-full px-4 py-3 pl-12 bg-white/5 border border-emerald-500/10 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-300 text-sm md:text-base"
+                  placeholder="enterprise@quantumfinance.com"
                 />
-                <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
+                <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 md:w-5 md:h-5 text-slate-400" />
               </div>
             </div>
 
@@ -134,36 +254,39 @@ const Login = () => {
                   value={form.password}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-3 pl-12 pr-12 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300"
+                  className="w-full px-4 py-3 pl-12 pr-12 bg-white/5 border border-emerald-500/10 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-300 text-sm md:text-base"
                   placeholder="••••••••"
                 />
-                <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
-                <button
+                <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 md:w-5 md:h-5 text-slate-400" />
+                <motion.button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-white transition-colors"
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-emerald-300 transition-colors"
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
                 >
                   {showPassword ? (
-                    <EyeOff className="w-5 h-5" />
+                    <EyeOff className="w-4 h-4 md:w-5 md:h-5" />
                   ) : (
-                    <Eye className="w-5 h-5" />
+                    <Eye className="w-4 h-4 md:w-5 md:h-5" />
                   )}
-                </button>
+                </motion.button>
               </div>
             </div>
 
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <label className="flex items-center space-x-2 cursor-pointer">
                 <input
                   type="checkbox"
-                  className="w-4 h-4 rounded bg-white/5 border-white/10 text-purple-500 focus:ring-purple-500 focus:ring-offset-slate-900"
+                  className="w-4 h-4 rounded bg-white/5 border-emerald-500/30 text-emerald-500 focus:ring-emerald-500 focus:ring-offset-slate-900"
                 />
-                <span className="text-sm text-slate-300">Remember me</span>
+                <span className="text-sm text-slate-300">Remember device</span>
               </label>
               <Link
                 to="/forgot-password"
-                className="text-sm text-purple-300 hover:text-purple-200 transition-colors"
+                className="text-sm text-emerald-300 hover:text-emerald-200 transition-colors flex items-center gap-1"
               >
+                <Shield className="w-3 h-3" />
                 Forgot password?
               </Link>
             </div>
@@ -173,66 +296,128 @@ const Login = () => {
               whileTap={{ scale: 0.98 }}
               type="submit"
               disabled={loading}
-              className="w-full py-3 px-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold rounded-xl shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full py-3 px-4 bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-semibold rounded-xl shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
             >
               {loading ? (
                 <>
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                  Signing in...
+                  <motion.div
+                    className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full"
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                  />
+                  <span>Secure Sign In...</span>
                 </>
               ) : (
                 <>
                   <LogIn className="w-5 h-5" />
-                  Sign In
+                  <span>Access Dashboard</span>
                 </>
               )}
             </motion.button>
           </form>
 
-          <div className="relative my-8">
+          <div className="relative my-6 md:my-8">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-white/10"></div>
+              <div className="w-full border-t border-emerald-500/20"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-4 bg-slate-900 text-slate-400">
-                Or continue with
+              <span className="px-4 bg-slate-900/90 text-slate-400">
+                Enterprise SSO
               </span>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <button className="flex items-center justify-center gap-2 px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-slate-300 hover:bg-white/10 transition-colors">
-              <img
-                src="https://www.google.com/favicon.ico"
-                alt="Google"
-                className="w-5 h-5"
-              />
-              Google
-            </button>
-            <button className="flex items-center justify-center gap-2 px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-slate-300 hover:bg-white/10 transition-colors">
-              <img
-                src="https://github.githubassets.com/favicon.ico"
-                alt="GitHub"
-                className="w-5 h-5"
-              />
-              GitHub
-            </button>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <motion.button
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              className="flex items-center justify-center gap-2 px-4 py-3 bg-white/5 border border-emerald-500/10 rounded-xl text-slate-300 hover:bg-emerald-500/10 transition-colors group"
+            >
+              <BarChart3 className="w-4 h-4 md:w-5 md:h-5 text-emerald-400 group-hover:text-emerald-300" />
+              <span className="text-sm">Corporate SSO</span>
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              className="flex items-center justify-center gap-2 px-4 py-3 bg-white/5 border border-cyan-500/10 rounded-xl text-slate-300 hover:bg-cyan-500/10 transition-colors group"
+            >
+              <TrendingUp className="w-4 h-4 md:w-5 md:h-5 text-cyan-400 group-hover:text-cyan-300" />
+              <span className="text-sm">Investor Portal</span>
+            </motion.button>
           </div>
 
-          <p className="text-center text-slate-400 mt-8 text-sm">
-            Don't have an account?{" "}
+          <div className="mt-6 md:mt-8 p-4 bg-slate-900/50 rounded-xl border border-emerald-500/10">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-emerald-500/20 rounded-lg flex items-center justify-center">
+                  <DollarSign className="w-4 h-4 text-emerald-400" />
+                </div>
+                <div>
+                  <p className="text-xs text-slate-400">Security Level</p>
+                  <p className="text-sm text-emerald-300">Bank-grade Encryption</p>
+                </div>
+              </div>
+              <div className="flex gap-1">
+                {[1, 2, 3, 4].map((i) => (
+                  <motion.div
+                    key={i}
+                    className="w-1 h-4 bg-emerald-500 rounded-full"
+                    animate={{
+                      height: ["16px", "24px", "16px"],
+                    }}
+                    transition={{
+                      duration: 1,
+                      repeat: Infinity,
+                      delay: i * 0.1,
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <p className="text-center text-slate-400 mt-6 md:mt-8 text-sm">
+            New to Rcane'tFinance?{" "}
             <Link
               to="/register"
-              className="text-purple-300 hover:text-purple-200 font-semibold transition-colors"
+              className="text-emerald-300 hover:text-emerald-200 font-semibold transition-colors inline-flex items-center gap-1"
             >
-              Sign up now
+              Request Access
+              <motion.span
+                animate={{ x: [0, 3, 0] }}
+                transition={{ duration: 1.5, repeat: Infinity }}
+              >
+                →
+              </motion.span>
             </Link>
           </p>
         </div>
 
-        <p className="text-center text-slate-500 text-xs mt-6">
-          © 2024 Your Company. All rights reserved.
-        </p>
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+          className="text-center text-slate-500 text-xs mt-4 md:mt-6"
+        >
+          © 2024 Rcane'tFinance Inc. • FDIC Insured • 
+          <span className="text-emerald-400 ml-1">ISO 27001 Certified</span>
+        </motion.p>
+
+        {/* Mobile Optimized Features */}
+        <div className="mt-4 flex flex-wrap justify-center gap-3 md:hidden">
+          <div className="flex items-center gap-1 text-xs text-slate-500">
+            <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+            <span>256-bit SSL</span>
+          </div>
+          <div className="flex items-center gap-1 text-xs text-slate-500">
+            <div className="w-2 h-2 bg-cyan-500 rounded-full"></div>
+            <span>2FA Ready</span>
+          </div>
+          <div className="flex items-center gap-1 text-xs text-slate-500">
+            <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+            <span>GDPR Compliant</span>
+          </div>
+        </div>
       </motion.div>
     </div>
   );

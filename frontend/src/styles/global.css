@@ -550,3 +550,15 @@ input, textarea, select {
 .dark .footer-clean a:hover {
   color: #60a5fa;
 }
+@keyframes gradient {
+          0%,
+          100% {
+            background-position: 0% 50%;
+          }
+          50% {
+            background-position: 100% 50%;
+          }
+        }
+        .animate-gradient {
+          animation: gradient 3s ease infinite;
+        }

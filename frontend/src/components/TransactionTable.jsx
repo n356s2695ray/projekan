@@ -118,20 +118,21 @@ const TransactionTable = () => {
     }
   };
 
-  const handleBulkDelete = () => {
-    if (selectedRows.length === 0)
-      return showNotification("No transactions selected", "warning");
-    if (
-      window.confirm(`Delete ${selectedRows.length} selected transactions?`)
-    ) {
-      selectedRows.forEach((id) => removeTransaction(id));
+const handleBulkDelete = async () => {
+  if (!selectedRows.length)
+    return showNotification("No transactions selected", "warning");
+
+  if (window.confirm(`Delete ${selectedRows.length} selected transactions?`)) {
+    try {
+      await Promise.all(selectedRows.map((id) => removeTransaction(id)));
+
       setSelectedRows([]);
-      showNotification(
-        `${selectedRows.length} transactions deleted`,
-        "success"
-      );
+      showNotification("Transactions deleted", "success");
+    } catch {
+      showNotification("Failed to delete transactions", "error");
     }
-  };
+  }
+};
 
   const handleSort = (key) => {
     setSortConfig((prev) => ({

@@ -42,6 +42,7 @@ import {
   BarChart3,
   Sun,
   Moon,
+  MessageSquare,
 } from "lucide-react";
 import { useFinance } from "../context/FinanceContext";
 import { motion, AnimatePresence } from "framer-motion";
@@ -52,7 +53,12 @@ import {
 import Notification from "./Notification";
 import { darkModeManager } from "../utils/darkModeManager";
 
-const AddTransactionForm = ({ onClose, defaultType = "expense", editingTransaction = null }) => {
+const AddTransactionForm = ({
+  onClose,
+  defaultType = "expense",
+  editingTransaction = null,
+}) => {
+  const isEditRef = useRef(false);
   const {
     categories: contextCategories = [],
     categoriesLoading,
@@ -62,6 +68,7 @@ const AddTransactionForm = ({ onClose, defaultType = "expense", editingTransacti
 
   const isEdit = Boolean(editingTransaction);
   const modalRef = useRef(null);
+  const contentRef = useRef(null);
   const [darkMode, setDarkMode] = useState(darkModeManager.getDarkMode());
 
   useEffect(() => {
@@ -92,13 +99,13 @@ const AddTransactionForm = ({ onClose, defaultType = "expense", editingTransacti
   const slideIn = {
     hidden: { x: 50, opacity: 0 },
     visible: { x: 0, opacity: 1 },
-    exit: { x: -50, opacity: 0 }
+    exit: { x: -50, opacity: 0 },
   };
 
   const fadeIn = {
     hidden: { opacity: 0, scale: 0.95 },
     visible: { opacity: 1, scale: 1 },
-    exit: { opacity: 0, scale: 0.95 }
+    exit: { opacity: 0, scale: 0.95 },
   };
 
   const staggerChildren = {
@@ -106,9 +113,9 @@ const AddTransactionForm = ({ onClose, defaultType = "expense", editingTransacti
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.1
-      }
-    }
+        staggerChildren: 0.1,
+      },
+    },
   };
 
   // Helper function: Format currency
@@ -151,11 +158,13 @@ const AddTransactionForm = ({ onClose, defaultType = "expense", editingTransacti
           default: "bg-blue-900/30 text-blue-300 border-blue-800/50",
         },
         expense: {
-          "Food & Dining": "bg-orange-900/30 text-orange-300 border-orange-800/50",
+          "Food & Dining":
+            "bg-orange-900/30 text-orange-300 border-orange-800/50",
           Transportation: "bg-blue-900/30 text-blue-300 border-blue-800/50",
           Entertainment: "bg-pink-900/30 text-pink-300 border-pink-800/50",
           Shopping: "bg-purple-900/30 text-purple-300 border-purple-800/50",
-          "Bills & Utilities": "bg-yellow-900/30 text-yellow-300 border-yellow-800/50",
+          "Bills & Utilities":
+            "bg-yellow-900/30 text-yellow-300 border-yellow-800/50",
           Healthcare: "bg-rose-900/30 text-rose-300 border-rose-800/50",
           Education: "bg-indigo-900/30 text-indigo-300 border-indigo-800/50",
           Travel: "bg-amber-900/30 text-amber-300 border-amber-800/50",
@@ -169,7 +178,11 @@ const AddTransactionForm = ({ onClose, defaultType = "expense", editingTransacti
           default: "bg-gray-800/50 text-gray-300 border-gray-700/50",
         },
       };
-      return colors[type]?.[name] || colors[type]?.default || "bg-gray-800/50 text-gray-300 border-gray-700/50";
+      return (
+        colors[type]?.[name] ||
+        colors[type]?.default ||
+        "bg-gray-800/50 text-gray-300 border-gray-700/50"
+      );
     } else {
       const colors = {
         income: {
@@ -204,7 +217,11 @@ const AddTransactionForm = ({ onClose, defaultType = "expense", editingTransacti
           default: "bg-gray-50 text-gray-700 border-gray-100",
         },
       };
-      return colors[type]?.[name] || colors[type]?.default || "bg-gray-50 text-gray-700 border-gray-100";
+      return (
+        colors[type]?.[name] ||
+        colors[type]?.default ||
+        "bg-gray-50 text-gray-700 border-gray-100"
+      );
     }
   };
 
@@ -284,17 +301,75 @@ const AddTransactionForm = ({ onClose, defaultType = "expense", editingTransacti
 
   // Dummy categories
   const dummyCategories = [
-    { id: 1, user_id: 1, name: "Gaji", type: "income", icon: "wallet", color: "#4f46e5" },
-    { id: 2, user_id: 1, name: "Bonus", type: "income", icon: "wallet", color: "#4f46e5" },
-    { id: 3, user_id: 1, name: "Investasi", type: "income", icon: "wallet", color: "#4f46e5" },
-    { id: 4, user_id: 1, name: "Makanan", type: "expense", icon: "wallet", color: "#4f46e5" },
-    { id: 5, user_id: 1, name: "Transportasi", type: "expense", icon: "wallet", color: "#4f46e5" },
-    { id: 6, user_id: 1, name: "Hiburan", type: "expense", icon: "wallet", color: "#4f46e5" },
-    { id: 7, user_id: 1, name: "Tagihan", type: "expense", icon: "wallet", color: "#4f46e5" },
-    { id: 8, user_id: 1, name: "Belanja", type: "expense", icon: "wallet", color: "#4f46e5" },
+    {
+      id: 1,
+      user_id: 1,
+      name: "Gaji",
+      type: "income",
+      icon: "wallet",
+      color: "#4f46e5",
+    },
+    {
+      id: 2,
+      user_id: 1,
+      name: "Bonus",
+      type: "income",
+      icon: "wallet",
+      color: "#4f46e5",
+    },
+    {
+      id: 3,
+      user_id: 1,
+      name: "Investasi",
+      type: "income",
+      icon: "wallet",
+      color: "#4f46e5",
+    },
+    {
+      id: 4,
+      user_id: 1,
+      name: "Makanan",
+      type: "expense",
+      icon: "wallet",
+      color: "#4f46e5",
+    },
+    {
+      id: 5,
+      user_id: 1,
+      name: "Transportasi",
+      type: "expense",
+      icon: "wallet",
+      color: "#4f46e5",
+    },
+    {
+      id: 6,
+      user_id: 1,
+      name: "Hiburan",
+      type: "expense",
+      icon: "wallet",
+      color: "#4f46e5",
+    },
+    {
+      id: 7,
+      user_id: 1,
+      name: "Tagihan",
+      type: "expense",
+      icon: "wallet",
+      color: "#4f46e5",
+    },
+    {
+      id: 8,
+      user_id: 1,
+      name: "Belanja",
+      type: "expense",
+      icon: "wallet",
+      color: "#4f46e5",
+    },
   ];
 
-  const categories = contextCategories.length ? contextCategories : dummyCategories;
+  const categories = contextCategories.length
+    ? contextCategories
+    : dummyCategories;
   const displayCategories = categories.map((cat) => ({
     ...cat,
     color: cat.color || "#4f46e5",
@@ -330,37 +405,14 @@ const AddTransactionForm = ({ onClose, defaultType = "expense", editingTransacti
   const filteredCategories = useMemo(() => {
     return displayCategories
       .filter((c) => c.type === formData.type)
-      .filter((c) =>
-        c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (c.description || "").toLowerCase().includes(searchTerm.toLowerCase())
+      .filter(
+        (c) =>
+          c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (c.description || "").toLowerCase().includes(searchTerm.toLowerCase())
       );
   }, [displayCategories, formData.type, searchTerm]);
 
   // Quick amounts dengan dark mode support
-  const quickAmounts = useMemo(() => {
-    const baseAmounts = formData.type === "income"
-      ? [
-          { value: 500000, label: "500K", type: "medium" },
-          { value: 1000000, label: "1M", type: "high" },
-          { value: 2500000, label: "2.5M", type: "high" },
-          { value: 5000000, label: "5M", type: "premium" },
-          { value: 10000000, label: "10M", type: "premium" },
-        ]
-      : [
-          { value: 10000, label: "10K", type: "small" },
-          { value: 50000, label: "50K", type: "medium" },
-          { value: 100000, label: "100K", type: "medium" },
-          { value: 250000, label: "250K", type: "high" },
-          { value: 500000, label: "500K", type: "high" },
-        ];
-    
-    return baseAmounts.map((amount) => ({
-      ...amount,
-      formatted: formatCompactCurrency(amount.value),
-      color: darkMode ? getDarkModeAmountColor(amount.type) : getLightModeAmountColor(amount.type)
-    }));
-  }, [formData.type, darkMode]);
-
   const getLightModeAmountColor = (type) => {
     const colors = {
       small: "bg-gray-50 border-gray-200 hover:bg-gray-100",
@@ -380,6 +432,33 @@ const AddTransactionForm = ({ onClose, defaultType = "expense", editingTransacti
     };
     return colors[type] || colors.medium;
   };
+
+  const quickAmounts = useMemo(() => {
+    const baseAmounts =
+      formData.type === "income"
+        ? [
+            { value: 500000, label: "500K", type: "medium" },
+            { value: 1000000, label: "1M", type: "high" },
+            { value: 2500000, label: "2.5M", type: "high" },
+            { value: 5000000, label: "5M", type: "premium" },
+            { value: 10000000, label: "10M", type: "premium" },
+          ]
+        : [
+            { value: 10000, label: "10K", type: "small" },
+            { value: 50000, label: "50K", type: "medium" },
+            { value: 100000, label: "100K", type: "medium" },
+            { value: 250000, label: "250K", type: "high" },
+            { value: 500000, label: "500K", type: "high" },
+          ];
+
+    return baseAmounts.map((amount) => ({
+      ...amount,
+      formatted: formatCompactCurrency(amount.value),
+      color: darkMode
+        ? getDarkModeAmountColor(amount.type)
+        : getLightModeAmountColor(amount.type),
+    }));
+  }, [formData.type, darkMode]);
 
   // Get selected items
   const selectedCategory = useMemo(
@@ -403,26 +482,33 @@ const AddTransactionForm = ({ onClose, defaultType = "expense", editingTransacti
     };
   }, []);
 
-  useEffect(() => {
-    if (editingTransaction) {
-      setFormData({
-        type: editingTransaction.type,
-        category_id: editingTransaction.category_id.toString(),
-        wallet_id: editingTransaction.wallet_id.toString(),
-        amount: editingTransaction.amount.toString(),
-        description: editingTransaction.description || "",
-        date: new Date(editingTransaction.date).toISOString().slice(0, 10),
-      });
-      setStep(5);
-    }
-  }, [editingTransaction]);
+useEffect(() => {
+  if (editingTransaction) {
+    isEditRef.current = true; // 👈 PENTING
+    setFormData({
+      type: editingTransaction.type,
+      category_id: editingTransaction.category_id.toString(),
+      wallet_id: editingTransaction.wallet_id.toString(),
+      amount: editingTransaction.amount.toString(),
+      description: editingTransaction.description || "",
+      date: new Date(editingTransaction.date).toISOString().slice(0, 10),
+    });
+    setStep(6);
+  }
+}, [editingTransaction]);
 
   // Set default category_id
   useEffect(() => {
-    const availableCategories = displayCategories.filter((c) => c.type === formData.type);
+    const availableCategories = displayCategories.filter(
+      (c) => c.type === formData.type
+    );
     const categoryIdNum = Number(formData.category_id);
 
-    if (availableCategories.length > 0 && (!formData.category_id || !availableCategories.some((c) => c.id === categoryIdNum))) {
+    if (
+      availableCategories.length > 0 &&
+      (!formData.category_id ||
+        !availableCategories.some((c) => c.id === categoryIdNum))
+    ) {
       setFormData((prev) => ({
         ...prev,
         category_id: availableCategories[0].id.toString(),
@@ -437,9 +523,6 @@ const AddTransactionForm = ({ onClose, defaultType = "expense", editingTransacti
       newErrors.amount = "Masukkan jumlah yang valid (lebih dari 0)";
     } else if (Number(formData.amount) > 1000000000) {
       newErrors.amount = "Jumlah tidak boleh melebihi 1 miliar";
-    }
-    if (!formData.description.trim()) {
-      newErrors.description = "Masukkan deskripsi transaksi";
     }
     if (!formData.category_id) {
       newErrors.category = "Pilih kategori";
@@ -468,19 +551,31 @@ const AddTransactionForm = ({ onClose, defaultType = "expense", editingTransacti
     if (errors.amount) setErrors((prev) => ({ ...prev, amount: "" }));
   };
 
+  // Handle description change
+  const handleDescriptionChange = (value) => {
+    setFormData((prev) => ({ ...prev, description: value }));
+  };
+
   // Show notification function
   const showNotification = (message, type = "success") => {
     setNotification({ message, type });
   };
 
-  // Handle submit
+  // Handle submit - DIPERBAIKI
   const handleSubmit = async (e) => {
     e?.preventDefault();
-    if (!validateForm()) return;
+
+    if (!validateForm()) {
+      console.log("❌ Validasi gagal");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
-      const selectedCategory = displayCategories.find((c) => c.id === Number(formData.category_id));
+      const selectedCategory = displayCategories.find(
+        (c) => c.id === Number(formData.category_id)
+      );
       if (!selectedCategory) {
         showNotification("Kategori belum siap. Coba tunggu sebentar.", "error");
         setIsSubmitting(false);
@@ -496,34 +591,53 @@ const AddTransactionForm = ({ onClose, defaultType = "expense", editingTransacti
         trx_date: formData.date,
       };
 
-      if (isEdit) {
-        await apiUpdateTransaction(editingTransaction.id, payload);
-        showNotification("Transaksi berhasil diperbarui!", "success");
+      console.log("📤 Payload yang dikirim:", payload);
+
+      let response;
+      if (isEditRef.current) {
+        response = await apiUpdateTransaction(editingTransaction.id, payload);
       } else {
-        await apiAddTransaction(payload);
-        showNotification("Transaksi berhasil ditambahkan!", "success");
+        response = await apiAddTransaction(payload);
       }
 
-      await afterMutation();
+
+      // Pastikan afterMutation() dipanggil dan menunggu selesai
+      console.log("🔄 Memanggil afterMutation...");
+      if (afterMutation) {
+        await afterMutation();
+        console.log("✅ afterMutation selesai");
+      } else {
+        console.log("⚠️ afterMutation tidak ada");
+      }
+
       setSuccess(true);
-      
+
       // Auto close setelah 2 detik
       setTimeout(() => {
         setAnimateOut(true);
-        setTimeout(() => onClose(), 300);
+        setTimeout(() => {
+          console.log("🔴 Menutup modal...");
+          onClose();
+        }, 300);
       }, 2000);
     } catch (err) {
-      console.error("SUBMIT ERROR:", err.response?.data || err);
-      const errorMessage = err.response?.data?.message || err.message || "Gagal menyimpan transaksi";
+      console.error("❌ SUBMIT ERROR:", err);
+      console.error(
+        "❌ Error details:",
+        err.response?.data || err.message || err
+      );
+      const errorMessage =
+        err.response?.data?.message ||
+        err.message ||
+        "Gagal menyimpan transaksi";
       showNotification(errorMessage, "error");
-    } finally {
       setIsSubmitting(false);
     }
   };
 
   // Step navigation
   const nextStep = () => {
-    if (step < 5) setStep(step + 1);
+    if (step < 6) setStep(step + 1);
   };
 
   const prevStep = () => {
@@ -537,21 +651,39 @@ const AddTransactionForm = ({ onClose, defaultType = "expense", editingTransacti
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className={`absolute inset-0 backdrop-blur-xl ${darkMode ? "bg-gray-900/95" : "bg-gray-900/80"}`}
+          className={`absolute inset-0 backdrop-blur-xl ${
+            darkMode ? "bg-gray-900/95" : "bg-gray-900/80"
+          }`}
         />
         <motion.div
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          className={`relative rounded-3xl shadow-2xl w-full max-w-md p-12 text-center ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border border-gray-200"}`}
+          className={`relative rounded-3xl shadow-2xl w-full max-w-md p-12 text-center ${
+            darkMode
+              ? "bg-gray-800 border-gray-700"
+              : "bg-white border border-gray-200"
+          }`}
         >
           <motion.div
             animate={{ rotate: 360 }}
             transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
           >
-            <Loader2 className={`w-12 h-12 mx-auto mb-4 ${darkMode ? "text-indigo-400" : "text-indigo-600"}`} />
+            <Loader2
+              className={`w-12 h-12 mx-auto mb-4 ${
+                darkMode ? "text-indigo-400" : "text-indigo-600"
+              }`}
+            />
           </motion.div>
-          <h3 className={`text-lg font-semibold ${darkMode ? "text-white" : "text-gray-900"}`}>Mempersiapkan Form</h3>
-          <p className={`mt-2 ${darkMode ? "text-gray-400" : "text-gray-600"}`}>Mohon tunggu sebentar...</p>
+          <h3
+            className={`text-lg font-semibold ${
+              darkMode ? "text-white" : "text-gray-900"
+            }`}
+          >
+            Mempersiapkan Form
+          </h3>
+          <p className={`mt-2 ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
+            Mohon tunggu sebentar...
+          </p>
         </motion.div>
       </div>
     );
@@ -564,12 +696,18 @@ const AddTransactionForm = ({ onClose, defaultType = "expense", editingTransacti
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className={`absolute inset-0 backdrop-blur-xl ${darkMode ? "bg-gray-900/95" : "bg-gray-900/80"}`}
+          className={`absolute inset-0 backdrop-blur-xl ${
+            darkMode ? "bg-gray-900/95" : "bg-gray-900/80"
+          }`}
         />
         <motion.div
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          className={`relative rounded-3xl shadow-2xl w-full max-w-md p-8 text-center ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border border-gray-200"}`}
+          className={`relative rounded-3xl shadow-2xl w-full max-w-md p-8 text-center ${
+            darkMode
+              ? "bg-gray-800 border-gray-700"
+              : "bg-white border border-gray-200"
+          }`}
         >
           <motion.div
             initial={{ scale: 0 }}
@@ -583,9 +721,16 @@ const AddTransactionForm = ({ onClose, defaultType = "expense", editingTransacti
                 <Sparkles className="w-6 h-6 text-white" />
               </div>
             </div>
-            <h2 className={`text-2xl font-bold mb-2 ${darkMode ? "text-white" : "text-gray-900"}`}>Transaksi Berhasil!</h2>
+            <h2
+              className={`text-2xl font-bold mb-2 ${
+                darkMode ? "text-white" : "text-gray-900"
+              }`}
+            >
+              Transaksi Berhasil!
+            </h2>
             <p className={`${darkMode ? "text-gray-400" : "text-gray-600"}`}>
-              {formData.type === "income" ? "Pemasukan" : "Pengeluaran"} telah dicatat
+              {formData.type === "income" ? "Pemasukan" : "Pengeluaran"} telah
+              dicatat
             </p>
           </motion.div>
 
@@ -595,12 +740,22 @@ const AddTransactionForm = ({ onClose, defaultType = "expense", editingTransacti
             animate="visible"
             className="space-y-6 mb-8"
           >
-            <motion.div 
-              variants={fadeIn} 
-              className={`p-5 rounded-2xl border-2 ${darkMode ? "bg-gray-800/50 border-gray-700" : "bg-gradient-to-r from-white to-gray-50 border-gray-200"}`}
+            <motion.div
+              variants={fadeIn}
+              className={`p-5 rounded-2xl border-2 ${
+                darkMode
+                  ? "bg-gray-800/50 border-gray-700"
+                  : "bg-gradient-to-r from-white to-gray-50 border-gray-200"
+              }`}
             >
               <div className="flex items-center gap-4">
-                <div className={`p-4 rounded-xl ${formData.type === "income" ? "bg-emerald-100" : "bg-rose-100"}`}>
+                <div
+                  className={`p-4 rounded-xl ${
+                    formData.type === "income"
+                      ? "bg-emerald-100"
+                      : "bg-rose-100"
+                  }`}
+                >
                   {formData.type === "income" ? (
                     <TrendingUp className="w-8 h-8 text-emerald-600" />
                   ) : (
@@ -608,11 +763,24 @@ const AddTransactionForm = ({ onClose, defaultType = "expense", editingTransacti
                   )}
                 </div>
                 <div className="text-left flex-1">
-                  <span className={`text-sm ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
-                    {formData.type === "income" ? "Pemasukan Ditambahkan" : "Pengeluaran Dicatat"}
+                  <span
+                    className={`text-sm ${
+                      darkMode ? "text-gray-400" : "text-gray-600"
+                    }`}
+                  >
+                    {formData.type === "income"
+                      ? "Pemasukan Ditambahkan"
+                      : "Pengeluaran Dicatat"}
                   </span>
-                  <p className={`text-3xl font-bold mt-1 ${formData.type === "income" ? "text-emerald-600" : "text-rose-600"}`}>
-                    {formData.type === "income" ? "+" : "-"} {formatCurrency(formData.amount)}
+                  <p
+                    className={`text-3xl font-bold mt-1 ${
+                      formData.type === "income"
+                        ? "text-emerald-600"
+                        : "text-rose-600"
+                    }`}
+                  >
+                    {formData.type === "income" ? "+" : "-"}{" "}
+                    {formatCurrency(formData.amount)}
                   </p>
                 </div>
               </div>
@@ -659,20 +827,32 @@ const AddTransactionForm = ({ onClose, defaultType = "expense", editingTransacti
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className={`absolute inset-0 backdrop-blur-xl ${darkMode ? "bg-gray-900/95" : "bg-gray-900/80"}`}
+          className={`absolute inset-0 backdrop-blur-xl ${
+            darkMode ? "bg-gray-900/95" : "bg-gray-900/80"
+          }`}
           onClick={onClose}
         />
 
         <motion.div
           ref={modalRef}
           initial={{ scale: 0.9, opacity: 0 }}
-          animate={animateOut ? { scale: 0.9, opacity: 0 } : { scale: 1, opacity: 1 }}
+          animate={
+            animateOut ? { scale: 0.9, opacity: 0 } : { scale: 1, opacity: 1 }
+          }
           transition={{ type: "spring", damping: 25 }}
-          className={`relative rounded-3xl shadow-2xl w-full max-w-md overflow-hidden max-h-[90vh] flex flex-col ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border border-gray-200"}`}
+          className={`relative rounded-3xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-hidden flex flex-col ${
+            darkMode
+              ? "bg-gray-800 border-gray-700"
+              : "bg-white border border-gray-200"
+          }`}
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Header */}
-          <div className={`p-6 border-b ${darkMode ? "border-gray-700" : "border-gray-200"}`}>
+          {/* Header - Fixed */}
+          <div
+            className={`p-6 border-b shrink-0 ${
+              darkMode ? "border-gray-700" : "border-gray-200"
+            }`}
+          >
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-4">
                 <motion.div
@@ -682,10 +862,20 @@ const AddTransactionForm = ({ onClose, defaultType = "expense", editingTransacti
                   <Banknote className="w-7 h-7 text-white" />
                 </motion.div>
                 <div>
-                  <h2 className={`text-xl font-bold ${darkMode ? "text-white" : "text-gray-900"}`}>
+                  <h2
+                    className={`text-xl font-bold ${
+                      darkMode ? "text-white" : "text-gray-900"
+                    }`}
+                  >
                     {isEdit ? "Edit Transaksi" : "Transaksi Baru"}
                   </h2>
-                  <p className={`text-sm ${darkMode ? "text-gray-400" : "text-gray-600"}`}>Langkah {step} dari 5</p>
+                  <p
+                    className={`text-sm ${
+                      darkMode ? "text-gray-400" : "text-gray-600"
+                    }`}
+                  >
+                    Langkah {step} dari 6
+                  </p>
                 </div>
               </div>
 
@@ -694,7 +884,9 @@ const AddTransactionForm = ({ onClose, defaultType = "expense", editingTransacti
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => darkModeManager.toggleDarkMode()}
-                  className={`p-2 rounded-xl ${darkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"}`}
+                  className={`p-2 rounded-xl ${
+                    darkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"
+                  }`}
                 >
                   {darkMode ? (
                     <Sun className="w-5 h-5 text-yellow-400" />
@@ -706,9 +898,15 @@ const AddTransactionForm = ({ onClose, defaultType = "expense", editingTransacti
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={onClose}
-                  className={`p-2 rounded-xl ${darkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"}`}
+                  className={`p-2 rounded-xl ${
+                    darkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"
+                  }`}
                 >
-                  <X className={`w-5 h-5 ${darkMode ? "text-gray-400" : "text-gray-500"}`} />
+                  <X
+                    className={`w-5 h-5 ${
+                      darkMode ? "text-gray-400" : "text-gray-500"
+                    }`}
+                  />
                 </motion.button>
               </div>
             </div>
@@ -716,27 +914,59 @@ const AddTransactionForm = ({ onClose, defaultType = "expense", editingTransacti
             {/* Progress bar */}
             <div className="mb-6">
               <div className="flex justify-between mb-2">
-                {[1, 2, 3, 4, 5].map((s) => (
+                {[1, 2, 3, 4, 5, 6].map((s) => (
                   <div key={s} className="flex flex-col items-center">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center mb-1 ${step >= s ? 'bg-indigo-600 text-white' : darkMode ? 'bg-gray-700 text-gray-400' : 'bg-gray-200 text-gray-500'}`}>
+                    <div
+                      className={`w-8 h-8 rounded-full flex items-center justify-center mb-1 ${
+                        step >= s
+                          ? "bg-indigo-600 text-white"
+                          : darkMode
+                          ? "bg-gray-700 text-gray-400"
+                          : "bg-gray-200 text-gray-500"
+                      }`}
+                    >
                       {s}
                     </div>
-                    <span className={`text-xs ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
-                      {s === 1 ? 'Tipe' : s === 2 ? 'Jumlah' : s === 3 ? 'Kategori' : s === 4 ? 'Dompet' : 'Konfirmasi'}
+                    <span
+                      className={`text-xs ${
+                        darkMode ? "text-gray-400" : "text-gray-500"
+                      }`}
+                    >
+                      {s === 1
+                        ? "Tipe"
+                        : s === 2
+                        ? "Jumlah"
+                        : s === 3
+                        ? "Kategori"
+                        : s === 4
+                        ? "Dompet"
+                        : s === 5
+                        ? "Deskripsi"
+                        : "Konfirmasi"}
                     </span>
                   </div>
                 ))}
               </div>
-              <div className={`h-2 rounded-full overflow-hidden ${darkMode ? "bg-gray-700" : "bg-gray-200"}`}>
+              <div
+                className={`h-2 rounded-full overflow-hidden ${
+                  darkMode ? "bg-gray-700" : "bg-gray-200"
+                }`}
+              >
                 <motion.div
                   initial={{ width: "0%" }}
-                  animate={{ width: `${(step / 5) * 100}%` }}
+                  animate={{ width: `${(step / 6) * 100}%` }}
                   className="h-full bg-gradient-to-r from-indigo-500 to-purple-600"
                 />
               </div>
             </div>
+          </div>
 
-            {/* Step Content */}
+          {/* Content Area - Scrollable */}
+          <div
+            ref={contentRef}
+            className="flex-1 overflow-y-auto p-6"
+            style={{ maxHeight: "calc(90vh - 300px)" }}
+          >
             <AnimatePresence mode="wait">
               {step === 1 && (
                 <motion.div
@@ -747,7 +977,13 @@ const AddTransactionForm = ({ onClose, defaultType = "expense", editingTransacti
                   exit="exit"
                   className="space-y-6"
                 >
-                  <h3 className={`text-lg font-semibold ${darkMode ? "text-white" : "text-gray-900"}`}>Pilih Jenis Transaksi</h3>
+                  <h3
+                    className={`text-lg font-semibold ${
+                      darkMode ? "text-white" : "text-gray-900"
+                    }`}
+                  >
+                    Pilih Jenis Transaksi
+                  </h3>
                   <div className="grid grid-cols-2 gap-4">
                     <motion.button
                       whileHover={{ scale: 1.03 }}
@@ -759,22 +995,50 @@ const AddTransactionForm = ({ onClose, defaultType = "expense", editingTransacti
                         nextStep();
                       }}
                       className={`flex flex-col items-center p-6 rounded-2xl border-2 transition-all duration-300 ${
-                        formData.type === "income" 
-                          ? "border-emerald-500 bg-gradient-to-b from-emerald-50 to-white shadow-lg" 
-                          : darkMode 
-                            ? "border-gray-700 hover:border-emerald-500 hover:bg-gray-800" 
-                            : "border-gray-200 hover:border-emerald-300 hover:shadow-md"
+                        formData.type === "income"
+                          ? "border-emerald-500 bg-gradient-to-b from-emerald-50 to-white shadow-lg"
+                          : darkMode
+                          ? "border-gray-700 hover:border-emerald-500 hover:bg-gray-800"
+                          : "border-gray-200 hover:border-emerald-300 hover:shadow-md"
                       }`}
                     >
                       <motion.div
-                        animate={formData.type === "income" ? { rotate: 360 } : {}}
+                        animate={
+                          formData.type === "income" ? { rotate: 360 } : {}
+                        }
                         transition={{ duration: 0.5 }}
-                        className={`p-4 rounded-xl mb-4 ${formData.type === "income" ? "bg-emerald-100" : darkMode ? "bg-gray-700" : "bg-gray-100"}`}
+                        className={`p-4 rounded-xl mb-4 ${
+                          formData.type === "income"
+                            ? "bg-emerald-100"
+                            : darkMode
+                            ? "bg-gray-700"
+                            : "bg-gray-100"
+                        }`}
                       >
-                        <ArrowUpCircle className={`w-8 h-8 ${formData.type === "income" ? "text-emerald-600" : darkMode ? "text-gray-400" : "text-gray-500"}`} />
+                        <ArrowUpCircle
+                          className={`w-8 h-8 ${
+                            formData.type === "income"
+                              ? "text-emerald-600"
+                              : darkMode
+                              ? "text-gray-400"
+                              : "text-gray-500"
+                          }`}
+                        />
                       </motion.div>
-                      <span className={`font-semibold ${darkMode ? "text-white" : "text-gray-900"}`}>Pemasukan</span>
-                      <span className={`text-sm mt-1 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Uang masuk</span>
+                      <span
+                        className={`font-semibold ${
+                          darkMode ? "text-white" : "text-gray-900"
+                        }`}
+                      >
+                        Pemasukan
+                      </span>
+                      <span
+                        className={`text-sm mt-1 ${
+                          darkMode ? "text-gray-400" : "text-gray-500"
+                        }`}
+                      >
+                        Uang masuk
+                      </span>
                     </motion.button>
 
                     <motion.button
@@ -787,22 +1051,50 @@ const AddTransactionForm = ({ onClose, defaultType = "expense", editingTransacti
                         nextStep();
                       }}
                       className={`flex flex-col items-center p-6 rounded-2xl border-2 transition-all duration-300 ${
-                        formData.type === "expense" 
-                          ? "border-rose-500 bg-gradient-to-b from-rose-50 to-white shadow-lg" 
-                          : darkMode 
-                            ? "border-gray-700 hover:border-rose-500 hover:bg-gray-800" 
-                            : "border-gray-200 hover:border-rose-300 hover:shadow-md"
+                        formData.type === "expense"
+                          ? "border-rose-500 bg-gradient-to-b from-rose-50 to-white shadow-lg"
+                          : darkMode
+                          ? "border-gray-700 hover:border-rose-500 hover:bg-gray-800"
+                          : "border-gray-200 hover:border-rose-300 hover:shadow-md"
                       }`}
                     >
                       <motion.div
-                        animate={formData.type === "expense" ? { rotate: 360 } : {}}
+                        animate={
+                          formData.type === "expense" ? { rotate: 360 } : {}
+                        }
                         transition={{ duration: 0.5 }}
-                        className={`p-4 rounded-xl mb-4 ${formData.type === "expense" ? "bg-rose-100" : darkMode ? "bg-gray-700" : "bg-gray-100"}`}
+                        className={`p-4 rounded-xl mb-4 ${
+                          formData.type === "expense"
+                            ? "bg-rose-100"
+                            : darkMode
+                            ? "bg-gray-700"
+                            : "bg-gray-100"
+                        }`}
                       >
-                        <ArrowDownCircle className={`w-8 h-8 ${formData.type === "expense" ? "text-rose-600" : darkMode ? "text-gray-400" : "text-gray-500"}`} />
+                        <ArrowDownCircle
+                          className={`w-8 h-8 ${
+                            formData.type === "expense"
+                              ? "text-rose-600"
+                              : darkMode
+                              ? "text-gray-400"
+                              : "text-gray-500"
+                          }`}
+                        />
                       </motion.div>
-                      <span className={`font-semibold ${darkMode ? "text-white" : "text-gray-900"}`}>Pengeluaran</span>
-                      <span className={`text-sm mt-1 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Uang keluar</span>
+                      <span
+                        className={`font-semibold ${
+                          darkMode ? "text-white" : "text-gray-900"
+                        }`}
+                      >
+                        Pengeluaran
+                      </span>
+                      <span
+                        className={`text-sm mt-1 ${
+                          darkMode ? "text-gray-400" : "text-gray-500"
+                        }`}
+                      >
+                        Uang keluar
+                      </span>
                     </motion.button>
                   </div>
                 </motion.div>
@@ -818,19 +1110,41 @@ const AddTransactionForm = ({ onClose, defaultType = "expense", editingTransacti
                   className="space-y-6"
                 >
                   <div className="flex items-center justify-between">
-                    <h3 className={`text-lg font-semibold ${darkMode ? "text-white" : "text-gray-900"}`}>Masukkan Jumlah</h3>
-                    <button 
-                      onClick={prevStep} 
-                      className={`p-2 rounded-lg ${darkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"}`}
+                    <h3
+                      className={`text-lg font-semibold ${
+                        darkMode ? "text-white" : "text-gray-900"
+                      }`}
                     >
-                      <ChevronLeft className={`w-5 h-5 ${darkMode ? "text-gray-400" : "text-gray-500"}`} />
+                      Masukkan Jumlah
+                    </h3>
+                    <button
+                      onClick={prevStep}
+                      className={`p-2 rounded-lg ${
+                        darkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"
+                      }`}
+                    >
+                      <ChevronLeft
+                        className={`w-5 h-5 ${
+                          darkMode ? "text-gray-400" : "text-gray-500"
+                        }`}
+                      />
                     </button>
                   </div>
 
                   <div className="relative">
                     <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10">
-                      <div className={`p-3 rounded-xl shadow-sm ${darkMode ? "bg-gray-700" : "bg-gradient-to-br from-gray-100 to-gray-50"}`}>
-                        <Banknote className={`w-6 h-6 ${darkMode ? "text-gray-300" : "text-gray-700"}`} />
+                      <div
+                        className={`p-3 rounded-xl shadow-sm ${
+                          darkMode
+                            ? "bg-gray-700"
+                            : "bg-gradient-to-br from-gray-100 to-gray-50"
+                        }`}
+                      >
+                        <Banknote
+                          className={`w-6 h-6 ${
+                            darkMode ? "text-gray-300" : "text-gray-700"
+                          }`}
+                        />
                       </div>
                     </div>
                     <motion.input
@@ -838,8 +1152,8 @@ const AddTransactionForm = ({ onClose, defaultType = "expense", editingTransacti
                       animate={{ opacity: 1, y: 0 }}
                       type="text"
                       className={`w-full pl-20 pr-24 py-5 border-2 rounded-xl text-4xl font-bold focus:outline-none transition-all placeholder:text-gray-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 ${
-                        darkMode 
-                          ? "bg-gray-800 border-gray-700 text-white focus:ring-indigo-500/20" 
+                        darkMode
+                          ? "bg-gray-800 border-gray-700 text-white focus:ring-indigo-500/20"
                           : "bg-white border-gray-300 text-gray-900"
                       }`}
                       placeholder="0"
@@ -848,7 +1162,13 @@ const AddTransactionForm = ({ onClose, defaultType = "expense", editingTransacti
                       autoFocus
                     />
                     <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                      <span className={`text-lg font-bold ${darkMode ? "text-gray-300" : "text-gray-700"}`}>IDR</span>
+                      <span
+                        className={`text-lg font-bold ${
+                          darkMode ? "text-gray-300" : "text-gray-700"
+                        }`}
+                      >
+                        IDR
+                      </span>
                     </div>
                   </div>
 
@@ -857,47 +1177,79 @@ const AddTransactionForm = ({ onClose, defaultType = "expense", editingTransacti
                       initial={{ opacity: 0, scale: 0.9 }}
                       animate={{ opacity: 1, scale: 1 }}
                       className={`p-4 rounded-xl border-2 ${
-                        formData.type === "income" 
-                          ? darkMode 
-                            ? "border-emerald-800/50 bg-emerald-900/20" 
+                        formData.type === "income"
+                          ? darkMode
+                            ? "border-emerald-800/50 bg-emerald-900/20"
                             : "border-emerald-200 bg-emerald-50"
-                          : darkMode 
-                            ? "border-rose-800/50 bg-rose-900/20" 
-                            : "border-rose-200 bg-rose-50"
+                          : darkMode
+                          ? "border-rose-800/50 bg-rose-900/20"
+                          : "border-rose-200 bg-rose-50"
                       }`}
                     >
                       <div className="flex items-center justify-between">
                         <div>
-                          <span className={`text-sm ${darkMode ? "text-gray-400" : "text-gray-600"}`}>Total</span>
-                          <p className={`text-2xl font-bold ${formData.type === "income" ? "text-emerald-500" : "text-rose-500"}`}>
+                          <span
+                            className={`text-sm ${
+                              darkMode ? "text-gray-400" : "text-gray-600"
+                            }`}
+                          >
+                            Total
+                          </span>
+                          <p
+                            className={`text-2xl font-bold ${
+                              formData.type === "income"
+                                ? "text-emerald-500"
+                                : "text-rose-500"
+                            }`}
+                          >
                             {formatCurrency(formData.amount)}
                           </p>
                         </div>
-                        <Target className={`w-8 h-8 ${formData.type === "income" ? "text-emerald-500" : "text-rose-500"}`} />
+                        <Target
+                          className={`w-8 h-8 ${
+                            formData.type === "income"
+                              ? "text-emerald-500"
+                              : "text-rose-500"
+                          }`}
+                        />
                       </div>
                     </motion.div>
                   )}
 
                   <div className="grid grid-cols-2 gap-3">
-                    {quickAmounts.map(({ value, label, color, formatted }, index) => (
-                      <motion.button
-                        key={value}
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: index * 0.05 }}
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        type="button"
-                        onClick={() => {
-                          handleAmountChange(value.toString());
-                          setTimeout(nextStep, 300);
-                        }}
-                        className={`p-4 border-2 rounded-xl transition-all duration-300 hover:shadow-md text-center ${color}`}
-                      >
-                        <div className={`font-bold text-lg ${darkMode ? "text-white" : "text-gray-900"}`}>{label}</div>
-                        <div className={`text-xs mt-1 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>{formatted}</div>
-                      </motion.button>
-                    ))}
+                    {quickAmounts.map(
+                      ({ value, label, color, formatted }, index) => (
+                        <motion.button
+                          key={value}
+                          initial={{ opacity: 0, scale: 0.9 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ delay: index * 0.05 }}
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          type="button"
+                          onClick={() => {
+                            handleAmountChange(value.toString());
+                            setTimeout(nextStep, 300);
+                          }}
+                          className={`p-4 border-2 rounded-xl transition-all duration-300 hover:shadow-md text-center ${color}`}
+                        >
+                          <div
+                            className={`font-bold text-lg ${
+                              darkMode ? "text-white" : "text-gray-900"
+                            }`}
+                          >
+                            {label}
+                          </div>
+                          <div
+                            className={`text-xs mt-1 ${
+                              darkMode ? "text-gray-400" : "text-gray-500"
+                            }`}
+                          >
+                            {formatted}
+                          </div>
+                        </motion.button>
+                      )
+                    )}
                   </div>
                 </motion.div>
               )}
@@ -913,25 +1265,49 @@ const AddTransactionForm = ({ onClose, defaultType = "expense", editingTransacti
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className={`text-lg font-semibold ${darkMode ? "text-white" : "text-gray-900"}`}>Pilih Kategori</h3>
-                      <p className={`text-sm ${darkMode ? "text-gray-400" : "text-gray-600"}`}>{formData.type === "income" ? "Pemasukan" : "Pengeluaran"}</p>
+                      <h3
+                        className={`text-lg font-semibold ${
+                          darkMode ? "text-white" : "text-gray-900"
+                        }`}
+                      >
+                        Pilih Kategori
+                      </h3>
+                      <p
+                        className={`text-sm ${
+                          darkMode ? "text-gray-400" : "text-gray-600"
+                        }`}
+                      >
+                        {formData.type === "income"
+                          ? "Pemasukan"
+                          : "Pengeluaran"}
+                      </p>
                     </div>
-                    <button 
-                      onClick={prevStep} 
-                      className={`p-2 rounded-lg ${darkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"}`}
+                    <button
+                      onClick={prevStep}
+                      className={`p-2 rounded-lg ${
+                        darkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"
+                      }`}
                     >
-                      <ChevronLeft className={`w-5 h-5 ${darkMode ? "text-gray-400" : "text-gray-500"}`} />
+                      <ChevronLeft
+                        className={`w-5 h-5 ${
+                          darkMode ? "text-gray-400" : "text-gray-500"
+                        }`}
+                      />
                     </button>
                   </div>
 
                   <div className="relative">
-                    <Search className={`absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 ${darkMode ? "text-gray-500" : "text-gray-400"}`} />
+                    <Search
+                      className={`absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 ${
+                        darkMode ? "text-gray-500" : "text-gray-400"
+                      }`}
+                    />
                     <input
                       type="text"
                       placeholder="Cari kategori..."
                       className={`w-full pl-12 pr-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-500/10 ${
-                        darkMode 
-                          ? "bg-gray-800 border-gray-700 text-white placeholder-gray-500 focus:border-indigo-500" 
+                        darkMode
+                          ? "bg-gray-800 border-gray-700 text-white placeholder-gray-500 focus:border-indigo-500"
                           : "bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-indigo-500"
                       }`}
                       value={searchTerm}
@@ -943,16 +1319,43 @@ const AddTransactionForm = ({ onClose, defaultType = "expense", editingTransacti
                     <motion.div
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className={`p-4 border-2 rounded-xl ${darkMode ? "border-indigo-800/50 bg-indigo-900/20" : "border-indigo-200 bg-gradient-to-r from-indigo-50/80 to-white"}`}
+                      className={`p-4 border-2 rounded-xl ${
+                        darkMode
+                          ? "border-indigo-800/50 bg-indigo-900/20"
+                          : "border-indigo-200 bg-gradient-to-r from-indigo-50/80 to-white"
+                      }`}
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
-                          <div className={`p-3 rounded-lg shadow-sm ${getCategoryColor(selectedCategory.name, selectedCategory.type)}`}>
-                            {React.createElement(getCategoryIcon(selectedCategory.name, selectedCategory.type), { className: "w-6 h-6" })}
+                          <div
+                            className={`p-3 rounded-lg shadow-sm ${getCategoryColor(
+                              selectedCategory.name,
+                              selectedCategory.type
+                            )}`}
+                          >
+                            {React.createElement(
+                              getCategoryIcon(
+                                selectedCategory.name,
+                                selectedCategory.type
+                              ),
+                              { className: "w-6 h-6" }
+                            )}
                           </div>
                           <div>
-                            <div className={`font-bold ${darkMode ? "text-white" : "text-gray-900"}`}>{selectedCategory.name}</div>
-                            <div className={`text-sm ${darkMode ? "text-gray-400" : "text-gray-600"}`}>Dipilih</div>
+                            <div
+                              className={`font-bold ${
+                                darkMode ? "text-white" : "text-gray-900"
+                              }`}
+                            >
+                              {selectedCategory.name}
+                            </div>
+                            <div
+                              className={`text-sm ${
+                                darkMode ? "text-gray-400" : "text-gray-600"
+                              }`}
+                            >
+                              Dipilih
+                            </div>
                           </div>
                         </div>
                         <CheckCircle className="w-6 h-6 text-indigo-600" />
@@ -962,7 +1365,7 @@ const AddTransactionForm = ({ onClose, defaultType = "expense", editingTransacti
 
                   <motion.div
                     variants={staggerChildren}
-                    className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-60 overflow-y-auto p-1"
+                    className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-1"
                   >
                     {filteredCategories.map((category, index) => (
                       <motion.button
@@ -972,7 +1375,10 @@ const AddTransactionForm = ({ onClose, defaultType = "expense", editingTransacti
                         whileTap={{ scale: 0.95 }}
                         type="button"
                         onClick={() => {
-                          setFormData({ ...formData, category_id: category.id.toString() });
+                          setFormData({
+                            ...formData,
+                            category_id: category.id.toString(),
+                          });
                           setTimeout(nextStep, 300);
                         }}
                         className={`flex flex-col items-center p-4 rounded-xl border-2 transition-all ${
@@ -985,10 +1391,22 @@ const AddTransactionForm = ({ onClose, defaultType = "expense", editingTransacti
                             : "border-gray-200 hover:border-gray-300 bg-white hover:shadow-md"
                         }`}
                       >
-                        <div className={`p-3 rounded-lg mb-2 shadow-sm ${getCategoryColor(category.name, category.type)}`}>
-                          {React.createElement(getCategoryIcon(category.name, category.type), { className: "w-5 h-5" })}
+                        <div
+                          className={`p-3 rounded-lg mb-2 shadow-sm ${getCategoryColor(
+                            category.name,
+                            category.type
+                          )}`}
+                        >
+                          {React.createElement(
+                            getCategoryIcon(category.name, category.type),
+                            { className: "w-5 h-5" }
+                          )}
                         </div>
-                        <span className={`text-xs font-semibold text-center truncate w-full ${darkMode ? "text-white" : "text-gray-900"}`}>
+                        <span
+                          className={`text-xs font-semibold text-center truncate w-full ${
+                            darkMode ? "text-white" : "text-gray-900"
+                          }`}
+                        >
                           {category.name}
                         </span>
                       </motion.button>
@@ -1008,14 +1426,32 @@ const AddTransactionForm = ({ onClose, defaultType = "expense", editingTransacti
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className={`text-lg font-semibold ${darkMode ? "text-white" : "text-gray-900"}`}>Pilih Dompet</h3>
-                      <p className={`text-sm ${darkMode ? "text-gray-400" : "text-gray-600"}`}>Saldo akan diperbarui</p>
+                      <h3
+                        className={`text-lg font-semibold ${
+                          darkMode ? "text-white" : "text-gray-900"
+                        }`}
+                      >
+                        Pilih Dompet
+                      </h3>
+                      <p
+                        className={`text-sm ${
+                          darkMode ? "text-gray-400" : "text-gray-600"
+                        }`}
+                      >
+                        Saldo akan diperbarui
+                      </p>
                     </div>
-                    <button 
-                      onClick={prevStep} 
-                      className={`p-2 rounded-lg ${darkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"}`}
+                    <button
+                      onClick={prevStep}
+                      className={`p-2 rounded-lg ${
+                        darkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"
+                      }`}
                     >
-                      <ChevronLeft className={`w-5 h-5 ${darkMode ? "text-gray-400" : "text-gray-500"}`} />
+                      <ChevronLeft
+                        className={`w-5 h-5 ${
+                          darkMode ? "text-gray-400" : "text-gray-500"
+                        }`}
+                      />
                     </button>
                   </div>
 
@@ -1024,17 +1460,36 @@ const AddTransactionForm = ({ onClose, defaultType = "expense", editingTransacti
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       className={`p-5 border-2 rounded-xl shadow-sm ${
-                        darkMode ? "border-indigo-800/50 bg-indigo-900/20" : "border-indigo-200 bg-gradient-to-r from-indigo-50/80 to-white"
+                        darkMode
+                          ? "border-indigo-800/50 bg-indigo-900/20"
+                          : "border-indigo-200 bg-gradient-to-r from-indigo-50/80 to-white"
                       }`}
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
-                          <div className={`p-3 rounded-lg shadow-sm ${selectedWallet.color}`}>
-                            {React.createElement(getWalletIcon(selectedWallet.type), { className: "w-6 h-6" })}
+                          <div
+                            className={`p-3 rounded-lg shadow-sm ${selectedWallet.color}`}
+                          >
+                            {React.createElement(
+                              getWalletIcon(selectedWallet.type),
+                              { className: "w-6 h-6" }
+                            )}
                           </div>
                           <div>
-                            <div className={`font-bold ${darkMode ? "text-white" : "text-gray-900"}`}>{selectedWallet.name}</div>
-                            <div className={`text-lg font-bold mt-1 ${selectedWallet.balance >= 0 ? "text-emerald-500" : "text-rose-500"}`}>
+                            <div
+                              className={`font-bold ${
+                                darkMode ? "text-white" : "text-gray-900"
+                              }`}
+                            >
+                              {selectedWallet.name}
+                            </div>
+                            <div
+                              className={`text-lg font-bold mt-1 ${
+                                selectedWallet.balance >= 0
+                                  ? "text-emerald-500"
+                                  : "text-rose-500"
+                              }`}
+                            >
                               {formatCurrency(selectedWallet.balance)}
                             </div>
                           </div>
@@ -1046,7 +1501,7 @@ const AddTransactionForm = ({ onClose, defaultType = "expense", editingTransacti
 
                   <motion.div
                     variants={staggerChildren}
-                    className="space-y-3 max-h-60 overflow-y-auto p-1"
+                    className="space-y-3 p-1"
                   >
                     {enhancedWallets.map((wallet, index) => {
                       const WalletIconComponent = getWalletIcon(wallet.type);
@@ -1058,7 +1513,10 @@ const AddTransactionForm = ({ onClose, defaultType = "expense", editingTransacti
                           whileTap={{ scale: 0.98 }}
                           type="button"
                           onClick={() => {
-                            setFormData({ ...formData, wallet_id: wallet.id.toString() });
+                            setFormData({
+                              ...formData,
+                              wallet_id: wallet.id.toString(),
+                            });
                             setTimeout(nextStep, 300);
                           }}
                           className={`w-full p-4 border-2 rounded-xl transition-all duration-300 hover:shadow-md ${
@@ -1073,22 +1531,46 @@ const AddTransactionForm = ({ onClose, defaultType = "expense", editingTransacti
                         >
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-4">
-                              <div className={`p-3 rounded-lg shadow-sm ${wallet.color}`}>
+                              <div
+                                className={`p-3 rounded-lg shadow-sm ${wallet.color}`}
+                              >
                                 <WalletIconComponent className="w-5 h-5" />
                               </div>
                               <div className="text-left">
-                                <div className={`font-semibold ${darkMode ? "text-white" : "text-gray-900"}`}>{wallet.name}</div>
+                                <div
+                                  className={`font-semibold ${
+                                    darkMode ? "text-white" : "text-gray-900"
+                                  }`}
+                                >
+                                  {wallet.name}
+                                </div>
                                 <div className="flex items-center gap-3 mt-1">
-                                  <span className={`text-sm font-medium ${wallet.balance >= 0 ? "text-emerald-500" : "text-rose-500"}`}>
+                                  <span
+                                    className={`text-sm font-medium ${
+                                      wallet.balance >= 0
+                                        ? "text-emerald-500"
+                                        : "text-rose-500"
+                                    }`}
+                                  >
                                     {formatCurrency(wallet.balance)}
                                   </span>
-                                  <span className={`text-xs font-medium px-2 py-1 rounded-full ${darkMode ? "bg-gray-700 text-gray-300" : "bg-gray-100 text-gray-700"}`}>
+                                  <span
+                                    className={`text-xs font-medium px-2 py-1 rounded-full ${
+                                      darkMode
+                                        ? "bg-gray-700 text-gray-300"
+                                        : "bg-gray-100 text-gray-700"
+                                    }`}
+                                  >
                                     {wallet.type}
                                   </span>
                                 </div>
                               </div>
                             </div>
-                            <ChevronRight className={`w-5 h-5 ${darkMode ? "text-gray-500" : "text-gray-400"}`} />
+                            <ChevronRight
+                              className={`w-5 h-5 ${
+                                darkMode ? "text-gray-500" : "text-gray-400"
+                              }`}
+                            />
                           </div>
                         </motion.button>
                       );
@@ -1108,21 +1590,343 @@ const AddTransactionForm = ({ onClose, defaultType = "expense", editingTransacti
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className={`text-lg font-semibold ${darkMode ? "text-white" : "text-gray-900"}`}>Konfirmasi Transaksi</h3>
-                      <p className={`text-sm ${darkMode ? "text-gray-400" : "text-gray-600"}`}>Periksa detail sebelum menyimpan</p>
+                      <h3
+                        className={`text-lg font-semibold ${
+                          darkMode ? "text-white" : "text-gray-900"
+                        }`}
+                      >
+                        Tambahkan Deskripsi
+                      </h3>
+                      <p
+                        className={`text-sm ${
+                          darkMode ? "text-gray-400" : "text-gray-600"
+                        }`}
+                      >
+                        Opsional, tapi disarankan
+                      </p>
                     </div>
-                    <button 
-                      onClick={prevStep} 
-                      className={`p-2 rounded-lg ${darkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"}`}
+                    <button
+                      onClick={prevStep}
+                      className={`p-2 rounded-lg ${
+                        darkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"
+                      }`}
                     >
-                      <ChevronLeft className={`w-5 h-5 ${darkMode ? "text-gray-400" : "text-gray-500"}`} />
+                      <ChevronLeft
+                        className={`w-5 h-5 ${
+                          darkMode ? "text-gray-400" : "text-gray-500"
+                        }`}
+                      />
                     </button>
                   </div>
 
-                  <motion.div
-                    variants={staggerChildren}
-                    className="space-y-4"
-                  >
+                  <div className="space-y-4">
+                    <div className="relative">
+                      <MessageSquare
+                        className={`absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 ${
+                          darkMode ? "text-gray-500" : "text-gray-400"
+                        }`}
+                      />
+                      <textarea
+                        placeholder="Contoh: Makan siang di resto, gaji bulan januari, beli baju baru..."
+                        className={`w-full pl-12 pr-4 py-4 border-2 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-500/10 resize-none min-h-[120px] ${
+                          darkMode
+                            ? "bg-gray-800 border-gray-700 text-white placeholder-gray-500 focus:border-indigo-500"
+                            : "bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-indigo-500"
+                        }`}
+                        value={formData.description}
+                        onChange={(e) =>
+                          handleDescriptionChange(e.target.value)
+                        }
+                        maxLength={200}
+                      />
+                      <div
+                        className={`text-xs mt-2 text-right ${
+                          darkMode ? "text-gray-500" : "text-gray-400"
+                        }`}
+                      >
+                        {formData.description.length}/200 karakter
+                      </div>
+                    </div>
+
+                    {/* Quick description suggestions */}
+                    <div className="grid grid-cols-2 gap-3">
+                      {formData.type === "income" ? (
+                        <>
+                          <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            type="button"
+                            onClick={() =>
+                              handleDescriptionChange("Gaji bulanan")
+                            }
+                            className={`p-3 border-2 rounded-xl text-left ${
+                              darkMode
+                                ? "border-gray-700 hover:border-indigo-500 bg-gray-800"
+                                : "border-gray-200 hover:border-indigo-300 bg-gray-50"
+                            }`}
+                          >
+                            <div
+                              className={`font-medium text-sm ${
+                                darkMode ? "text-white" : "text-gray-900"
+                              }`}
+                            >
+                              Gaji bulanan
+                            </div>
+                            <div
+                              className={`text-xs mt-1 ${
+                                darkMode ? "text-gray-400" : "text-gray-500"
+                              }`}
+                            >
+                              Pemasukan rutin
+                            </div>
+                          </motion.button>
+                          <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            type="button"
+                            onClick={() =>
+                              handleDescriptionChange("Bonus tahunan")
+                            }
+                            className={`p-3 border-2 rounded-xl text-left ${
+                              darkMode
+                                ? "border-gray-700 hover:border-indigo-500 bg-gray-800"
+                                : "border-gray-200 hover:border-indigo-300 bg-gray-50"
+                            }`}
+                          >
+                            <div
+                              className={`font-medium text-sm ${
+                                darkMode ? "text-white" : "text-gray-900"
+                              }`}
+                            >
+                              Bonus tahunan
+                            </div>
+                            <div
+                              className={`text-xs mt-1 ${
+                                darkMode ? "text-gray-400" : "text-gray-500"
+                              }`}
+                            >
+                              Tambahan insentif
+                            </div>
+                          </motion.button>
+                          <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            type="button"
+                            onClick={() =>
+                              handleDescriptionChange("Hasil investasi")
+                            }
+                            className={`p-3 border-2 rounded-xl text-left ${
+                              darkMode
+                                ? "border-gray-700 hover:border-indigo-500 bg-gray-800"
+                                : "border-gray-200 hover:border-indigo-300 bg-gray-50"
+                            }`}
+                          >
+                            <div
+                              className={`font-medium text-sm ${
+                                darkMode ? "text-white" : "text-gray-900"
+                              }`}
+                            >
+                              Hasil investasi
+                            </div>
+                            <div
+                              className={`text-xs mt-1 ${
+                                darkMode ? "text-gray-400" : "text-gray-500"
+                              }`}
+                            >
+                              Return portfolio
+                            </div>
+                          </motion.button>
+                          <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            type="button"
+                            onClick={() =>
+                              handleDescriptionChange("Freelance project")
+                            }
+                            className={`p-3 border-2 rounded-xl text-left ${
+                              darkMode
+                                ? "border-gray-700 hover:border-indigo-500 bg-gray-800"
+                                : "border-gray-200 hover:border-indigo-300 bg-gray-50"
+                            }`}
+                          >
+                            <div
+                              className={`font-medium text-sm ${
+                                darkMode ? "text-white" : "text-gray-900"
+                              }`}
+                            >
+                              Freelance project
+                            </div>
+                            <div
+                              className={`text-xs mt-1 ${
+                                darkMode ? "text-gray-400" : "text-gray-500"
+                              }`}
+                            >
+                              Pekerjaan sampingan
+                            </div>
+                          </motion.button>
+                        </>
+                      ) : (
+                        <>
+                          <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            type="button"
+                            onClick={() =>
+                              handleDescriptionChange("Makan siang")
+                            }
+                            className={`p-3 border-2 rounded-xl text-left ${
+                              darkMode
+                                ? "border-gray-700 hover:border-indigo-500 bg-gray-800"
+                                : "border-gray-200 hover:border-indigo-300 bg-gray-50"
+                            }`}
+                          >
+                            <div
+                              className={`font-medium text-sm ${
+                                darkMode ? "text-white" : "text-gray-900"
+                              }`}
+                            >
+                              Makan siang
+                            </div>
+                            <div
+                              className={`text-xs mt-1 ${
+                                darkMode ? "text-gray-400" : "text-gray-500"
+                              }`}
+                            >
+                              Kebutuhan harian
+                            </div>
+                          </motion.button>
+                          <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            type="button"
+                            onClick={() =>
+                              handleDescriptionChange("Transportasi harian")
+                            }
+                            className={`p-3 border-2 rounded-xl text-left ${
+                              darkMode
+                                ? "border-gray-700 hover:border-indigo-500 bg-gray-800"
+                                : "border-gray-200 hover:border-indigo-300 bg-gray-50"
+                            }`}
+                          >
+                            <div
+                              className={`font-medium text-sm ${
+                                darkMode ? "text-white" : "text-gray-900"
+                              }`}
+                            >
+                              Transportasi
+                            </div>
+                            <div
+                              className={`text-xs mt-1 ${
+                                darkMode ? "text-gray-400" : "text-gray-500"
+                              }`}
+                            >
+                              Bensin/transport
+                            </div>
+                          </motion.button>
+                          <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            type="button"
+                            onClick={() =>
+                              handleDescriptionChange("Belanja bulanan")
+                            }
+                            className={`p-3 border-2 rounded-xl text-left ${
+                              darkMode
+                                ? "border-gray-700 hover:border-indigo-500 bg-gray-800"
+                                : "border-gray-200 hover:border-indigo-300 bg-gray-50"
+                            }`}
+                          >
+                            <div
+                              className={`font-medium text-sm ${
+                                darkMode ? "text-white" : "text-gray-900"
+                              }`}
+                            >
+                              Belanja bulanan
+                            </div>
+                            <div
+                              className={`text-xs mt-1 ${
+                                darkMode ? "text-gray-400" : "text-gray-500"
+                              }`}
+                            >
+                              Kebutuhan rumah
+                            </div>
+                          </motion.button>
+                          <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            type="button"
+                            onClick={() =>
+                              handleDescriptionChange("Tagihan listrik")
+                            }
+                            className={`p-3 border-2 rounded-xl text-left ${
+                              darkMode
+                                ? "border-gray-700 hover:border-indigo-500 bg-gray-800"
+                                : "border-gray-200 hover:border-indigo-300 bg-gray-50"
+                            }`}
+                          >
+                            <div
+                              className={`font-medium text-sm ${
+                                darkMode ? "text-white" : "text-gray-900"
+                              }`}
+                            >
+                              Tagihan listrik
+                            </div>
+                            <div
+                              className={`text-xs mt-1 ${
+                                darkMode ? "text-gray-400" : "text-gray-500"
+                              }`}
+                            >
+                              Pembayaran rutin
+                            </div>
+                          </motion.button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+
+              {step === 6 && (
+                <motion.div
+                  key="step6"
+                  variants={fadeIn}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                  className="space-y-6 pb-4"
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3
+                        className={`text-lg font-semibold ${
+                          darkMode ? "text-white" : "text-gray-900"
+                        }`}
+                      >
+                        Konfirmasi Transaksi
+                      </h3>
+                      <p
+                        className={`text-sm ${
+                          darkMode ? "text-gray-400" : "text-gray-600"
+                        }`}
+                      >
+                        Periksa detail sebelum menyimpan
+                      </p>
+                    </div>
+                    <button
+                      onClick={prevStep}
+                      className={`p-2 rounded-lg ${
+                        darkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"
+                      }`}
+                    >
+                      <ChevronLeft
+                        className={`w-5 h-5 ${
+                          darkMode ? "text-gray-400" : "text-gray-500"
+                        }`}
+                      />
+                    </button>
+                  </div>
+
+                  <motion.div variants={staggerChildren} className="space-y-4">
                     {/* Amount Card */}
                     <motion.div
                       variants={fadeIn}
@@ -1137,7 +1941,13 @@ const AddTransactionForm = ({ onClose, defaultType = "expense", editingTransacti
                       }`}
                     >
                       <div className="flex items-center gap-4">
-                        <div className={`p-4 rounded-xl ${formData.type === "income" ? "bg-emerald-100" : "bg-rose-100"}`}>
+                        <div
+                          className={`p-4 rounded-xl ${
+                            formData.type === "income"
+                              ? "bg-emerald-100"
+                              : "bg-rose-100"
+                          }`}
+                        >
                           {formData.type === "income" ? (
                             <TrendingUp className="w-8 h-8 text-emerald-600" />
                           ) : (
@@ -1145,10 +1955,22 @@ const AddTransactionForm = ({ onClose, defaultType = "expense", editingTransacti
                           )}
                         </div>
                         <div className="text-left flex-1">
-                          <span className={`text-sm ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
-                            {formData.type === "income" ? "Jumlah Pemasukan" : "Jumlah Pengeluaran"}
+                          <span
+                            className={`text-sm ${
+                              darkMode ? "text-gray-400" : "text-gray-600"
+                            }`}
+                          >
+                            {formData.type === "income"
+                              ? "Jumlah Pemasukan"
+                              : "Jumlah Pengeluaran"}
                           </span>
-                          <p className={`text-2xl font-bold mt-1 ${formData.type === "income" ? "text-emerald-500" : "text-rose-500"}`}>
+                          <p
+                            className={`text-2xl font-bold mt-1 ${
+                              formData.type === "income"
+                                ? "text-emerald-500"
+                                : "text-rose-500"
+                            }`}
+                          >
                             {formatCurrency(formData.amount)}
                           </p>
                         </div>
@@ -1158,19 +1980,46 @@ const AddTransactionForm = ({ onClose, defaultType = "expense", editingTransacti
                     {/* Details Grid */}
                     <div className="grid grid-cols-2 gap-4">
                       {/* Category */}
-                      <motion.div 
-                        variants={fadeIn} 
-                        className={`p-4 rounded-xl border ${darkMode ? "border-gray-700 bg-gray-800" : "border-gray-200 bg-white"} shadow-sm`}
+                      <motion.div
+                        variants={fadeIn}
+                        className={`p-4 rounded-xl border ${
+                          darkMode
+                            ? "border-gray-700 bg-gray-800"
+                            : "border-gray-200 bg-white"
+                        } shadow-sm`}
                       >
-                        <span className={`text-xs font-medium uppercase ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Kategori</span>
+                        <span
+                          className={`text-xs font-medium uppercase ${
+                            darkMode ? "text-gray-400" : "text-gray-500"
+                          }`}
+                        >
+                          Kategori
+                        </span>
                         <div className="flex items-center gap-3 mt-2">
                           {selectedCategory && (
                             <>
-                              <div className={`p-2 rounded-lg ${getCategoryColor(selectedCategory.name, selectedCategory.type)}`}>
-                                {React.createElement(getCategoryIcon(selectedCategory.name, selectedCategory.type), { className: "w-4 h-4" })}
+                              <div
+                                className={`p-2 rounded-lg ${getCategoryColor(
+                                  selectedCategory.name,
+                                  selectedCategory.type
+                                )}`}
+                              >
+                                {React.createElement(
+                                  getCategoryIcon(
+                                    selectedCategory.name,
+                                    selectedCategory.type
+                                  ),
+                                  { className: "w-4 h-4" }
+                                )}
                               </div>
                               <div>
-                                <p className={`font-semibold text-sm ${darkMode ? "text-white" : "text-gray-900"}`}>{selectedCategory.name}</p>
+                                <p
+                                  className={`font-semibold text-sm ${
+                                    darkMode ? "text-white" : "text-gray-900"
+                                  }`}
+                                >
+                                  {selectedCategory.name}
+                                </p>
                               </div>
                             </>
                           )}
@@ -1178,20 +2027,47 @@ const AddTransactionForm = ({ onClose, defaultType = "expense", editingTransacti
                       </motion.div>
 
                       {/* Wallet */}
-                      <motion.div 
-                        variants={fadeIn} 
-                        className={`p-4 rounded-xl border ${darkMode ? "border-gray-700 bg-gray-800" : "border-gray-200 bg-white"} shadow-sm`}
+                      <motion.div
+                        variants={fadeIn}
+                        className={`p-4 rounded-xl border ${
+                          darkMode
+                            ? "border-gray-700 bg-gray-800"
+                            : "border-gray-200 bg-white"
+                        } shadow-sm`}
                       >
-                        <span className={`text-xs font-medium uppercase ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Dompet</span>
+                        <span
+                          className={`text-xs font-medium uppercase ${
+                            darkMode ? "text-gray-400" : "text-gray-500"
+                          }`}
+                        >
+                          Dompet
+                        </span>
                         <div className="flex items-center gap-3 mt-2">
                           {selectedWallet && (
                             <>
-                              <div className={`p-2 rounded-lg ${selectedWallet.color}`}>
-                                {React.createElement(getWalletIcon(selectedWallet.type), { className: "w-4 h-4" })}
+                              <div
+                                className={`p-2 rounded-lg ${selectedWallet.color}`}
+                              >
+                                {React.createElement(
+                                  getWalletIcon(selectedWallet.type),
+                                  { className: "w-4 h-4" }
+                                )}
                               </div>
                               <div>
-                                <p className={`font-semibold text-sm ${darkMode ? "text-white" : "text-gray-900"}`}>{selectedWallet.name}</p>
-                                <p className={`text-xs ${darkMode ? "text-gray-400" : "text-gray-600"}`}>{formatCurrency(selectedWallet.balance)}</p>
+                                <p
+                                  className={`font-semibold text-sm ${
+                                    darkMode ? "text-white" : "text-gray-900"
+                                  }`}
+                                >
+                                  {selectedWallet.name}
+                                </p>
+                                <p
+                                  className={`text-xs ${
+                                    darkMode ? "text-gray-400" : "text-gray-600"
+                                  }`}
+                                >
+                                  {formatCurrency(selectedWallet.balance)}
+                                </p>
                               </div>
                             </>
                           )}
@@ -1201,31 +2077,68 @@ const AddTransactionForm = ({ onClose, defaultType = "expense", editingTransacti
 
                     {/* Description */}
                     {formData.description && (
-                      <motion.div 
-                        variants={fadeIn} 
-                        className={`p-4 rounded-xl border ${darkMode ? "border-gray-700 bg-gray-800" : "border-gray-200 bg-white"} shadow-sm`}
+                      <motion.div
+                        variants={fadeIn}
+                        className={`p-4 rounded-xl border ${
+                          darkMode
+                            ? "border-gray-700 bg-gray-800"
+                            : "border-gray-200 bg-white"
+                        } shadow-sm`}
                       >
-                        <span className={`text-xs font-medium uppercase ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Deskripsi</span>
-                        <p className={`font-medium mt-2 ${darkMode ? "text-white" : "text-gray-900"}`}>{formData.description}</p>
+                        <span
+                          className={`text-xs font-medium uppercase ${
+                            darkMode ? "text-gray-400" : "text-gray-500"
+                          }`}
+                        >
+                          Deskripsi
+                        </span>
+                        <p
+                          className={`font-medium mt-2 ${
+                            darkMode ? "text-white" : "text-gray-900"
+                          }`}
+                        >
+                          {formData.description}
+                        </p>
                       </motion.div>
                     )}
 
                     {/* Date */}
-                    <motion.div 
-                      variants={fadeIn} 
-                      className={`p-4 rounded-xl border ${darkMode ? "border-gray-700 bg-gray-800/50" : "border-gray-200 bg-gray-50/50"}`}
+                    <motion.div
+                      variants={fadeIn}
+                      className={`p-4 rounded-xl border ${
+                        darkMode
+                          ? "border-gray-700 bg-gray-800/50"
+                          : "border-gray-200 bg-gray-50/50"
+                      }`}
                     >
                       <div className="flex items-center gap-3">
-                        <CalendarDays className={`w-5 h-5 ${darkMode ? "text-gray-400" : "text-gray-500"}`} />
+                        <CalendarDays
+                          className={`w-5 h-5 ${
+                            darkMode ? "text-gray-400" : "text-gray-500"
+                          }`}
+                        />
                         <div>
-                          <span className={`text-xs ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Tanggal Transaksi</span>
-                          <p className={`font-medium mt-1 ${darkMode ? "text-white" : "text-gray-900"}`}>
-                            {new Date(formData.date).toLocaleDateString("id-ID", {
-                              weekday: "long",
-                              year: "numeric",
-                              month: "long",
-                              day: "numeric",
-                            })}
+                          <span
+                            className={`text-xs ${
+                              darkMode ? "text-gray-400" : "text-gray-500"
+                            }`}
+                          >
+                            Tanggal Transaksi
+                          </span>
+                          <p
+                            className={`font-medium mt-1 ${
+                              darkMode ? "text-white" : "text-gray-900"
+                            }`}
+                          >
+                            {new Date(formData.date).toLocaleDateString(
+                              "id-ID",
+                              {
+                                weekday: "long",
+                                year: "numeric",
+                                month: "long",
+                                day: "numeric",
+                              }
+                            )}
                           </p>
                         </div>
                       </div>
@@ -1236,10 +2149,16 @@ const AddTransactionForm = ({ onClose, defaultType = "expense", editingTransacti
             </AnimatePresence>
           </div>
 
-          {/* Footer dengan tombol submit yang jelas */}
-          <div className={`p-6 border-t ${darkMode ? "border-gray-700 bg-gray-900/50" : "border-gray-200 bg-gradient-to-t from-white via-white to-white/95"}`}>
+          {/* Footer - Fixed di bagian bawah */}
+          <div
+            className={`p-6 border-t shrink-0 ${
+              darkMode
+                ? "border-gray-700 bg-gray-900/50"
+                : "border-gray-200 bg-gradient-to-t from-white via-white to-white/95"
+            }`}
+          >
             <AnimatePresence mode="wait">
-              {step < 5 ? (
+              {step < 6 ? (
                 <motion.div
                   key="navigation"
                   initial={{ opacity: 0, y: 20 }}
@@ -1251,8 +2170,8 @@ const AddTransactionForm = ({ onClose, defaultType = "expense", editingTransacti
                     onClick={prevStep}
                     disabled={step === 1}
                     className={`flex-1 py-4 px-4 border-2 font-semibold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
-                      darkMode 
-                        ? "border-gray-700 text-gray-300 hover:bg-gray-800" 
+                      darkMode
+                        ? "border-gray-700 text-gray-300 hover:bg-gray-800"
                         : "border-gray-300 text-gray-700 hover:bg-gray-50"
                     }`}
                   >
@@ -1267,7 +2186,7 @@ const AddTransactionForm = ({ onClose, defaultType = "expense", editingTransacti
                     }
                     className="flex-1 py-4 px-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {step === 4 ? "Konfirmasi" : "Lanjut"}
+                    {step === 5 ? "Konfirmasi" : "Lanjut"}
                   </button>
                 </motion.div>
               ) : (
@@ -1290,14 +2209,22 @@ const AddTransactionForm = ({ onClose, defaultType = "expense", editingTransacti
                     ) : (
                       <>
                         <div className="p-2 rounded-lg bg-white/20 group-hover:bg-white/30 transition-colors">
-                          {formData.type === "income" ? <Plus className="w-5 h-5" /> : <TrendingDown className="w-5 h-5" />}
+                          {formData.type === "income" ? (
+                            <Plus className="w-5 h-5" />
+                          ) : (
+                            <TrendingDown className="w-5 h-5" />
+                          )}
                         </div>
                         <span>Simpan Transaksi</span>
                         <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                       </>
                     )}
                   </button>
-                  <p className={`text-xs text-center ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+                  <p
+                    className={`text-xs text-center ${
+                      darkMode ? "text-gray-400" : "text-gray-500"
+                    }`}
+                  >
                     Transaksi akan langsung dicatat dan tercermin di analitik
                   </p>
                 </motion.div>

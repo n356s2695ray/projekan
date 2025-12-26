@@ -6,7 +6,11 @@ import {
   useCallback,
 } from "react";
 
-import { getTransactions } from "../services/transactionsApi";
+import {
+  getTransactions,
+  deleteTransaction as deleteTransactionApi,
+  updateTransaction as updateTransactionApi,
+} from "../services/transactionsApi";
 import { getWallets } from "../services/walletsApi";
 import { getSummary, getCategory, getDaily } from "../services/dashboardApi";
 import { getBudgets, saveBudget, deleteBudget } from "../services/budgetsApi";
@@ -41,18 +45,20 @@ const fetchCategories = useCallback(async () => {
   try {
     const res = await getCategory();
     if (Array.isArray(res)) {
-      setCategories(
-        res.map((c) => ({
-          id: Number(c.id),
-          name: c.name,
-          type: c.type,
-          color: c.color || "#000",
-          icon: c.icon || "",
-        }))
-      );
+      const parsed = res.map((c) => ({
+        id: Number(c.id), // ⬅️ PENTING
+        name: c.name,
+        type: c.type,
+        color: c.color || "#000",
+        icon: c.icon || "",
+      }));
+      setCategories(parsed);
+      return parsed; // ⬅️ PENTING
     }
+    return [];
   } catch (error) {
     console.error("Error fetching categories:", error);
+    return [];
   } finally {
     setCategoriesLoading(false);
   }
@@ -67,14 +73,15 @@ const fetchAllData = useCallback(
       const month = now.getMonth() + 1;
       const year = now.getFullYear();
 
-      await fetchCategories();
+      // ✅ FETCH CATEGORY SEKALI
+      const fetchedCategories = await fetchCategories();
 
       // BUDGET
       const budgetRes = await getBudgets(month, year).catch(() => []);
       const budgetMap = {};
       budgetRes.forEach((b) => {
         if (b?.category_id != null) {
-          budgetMap[b.category_id] = Number(b.amount || 0);
+          budgetMap[Number(b.category_id)] = Number(b.amount || 0);
         }
       });
       setBudgets(budgetMap);
@@ -93,13 +100,22 @@ const fetchAllData = useCallback(
       // TRANSACTIONS
       const trxRes = await getTransactions().catch(() => []);
       setTransactions(
-        trxRes.map((t) => ({
-          ...t,
-          id: Number(t.id),
-          amount: Number(t.amount) || 0,
-          wallet_id: Number(t.wallet_id),
-          category_id: Number(t.category_id),
-        }))
+        trxRes.map((t) => {
+          const categoryId = Number(t.category_id);
+
+          const category = fetchedCategories.find((c) => c.id === categoryId);
+
+          return {
+            ...t,
+            id: Number(t.id),
+            amount: Number(t.amount) || 0,
+            wallet_id: Number(t.wallet_id),
+            category_id: categoryId,
+            category_name:
+              category?.name || t.category?.name || "Uncategorized",
+          };
+
+        })
       );
 
       // DASHBOARD
@@ -108,10 +124,9 @@ const fetchAllData = useCallback(
         getDaily().catch(() => []),
       ]);
 
-      // Jangan langsung pakai getCategoryData di sini, panggil setelah transactions & categories sudah set
       setDashboardData({
         summary: summaryRes,
-        categoryChart: [], // sementara kosong
+        categoryChart: [],
         dailyChart: dailyChartRes,
       });
     } finally {
@@ -119,7 +134,7 @@ const fetchAllData = useCallback(
       setRefreshing(false);
     }
   },
-  [fetchCategories] // Hapus transactions & categories
+  [fetchCategories]
 );
 
   useEffect(() => {
@@ -138,25 +153,28 @@ useEffect(() => {
   fetchAllData();
 }, [fetchAllData]);
 
-const getCategoryData = (type = "expense") => {
-  if (!categories.length) return [];
+const getCategoryData = useCallback(
+  (type = "expense") => {
+    const map = {};
 
-  const map = {};
+    transactions.forEach((trx) => {
+      if (trx.type?.toLowerCase() !== type) return;
 
-  transactions.forEach((trx) => {
-    if (trx.type !== type) return;
+      const key =
+        categories.find((c) => c.id === trx.category_id)?.name ||
+        trx.category_name ||
+        "Uncategorized";
 
-    const category = categories.find((c) => c.id === trx.category_id);
+      map[key] = (map[key] || 0) + trx.amount;
+    });
 
-    const key = category?.name || "Other";
-    map[key] = (map[key] || 0) + trx.amount;
-  });
-
-  return Object.entries(map).map(([name, total]) => ({
-    name,
-    total,
-  }));
-};
+    return Object.entries(map).map(([name, total]) => ({
+      name,
+      total,
+    }));
+  },
+  [transactions, categories]
+);
 
 
 // ================= GET MONTHLY DATA =================
@@ -171,13 +189,14 @@ const getMonthlyData = (timeRange = "month") => {
       monthlyMap[month] = { income: 0, expense: 0 };
     }
 
-    if (trx.type === "income") {
-      monthlyMap[month].income += trx.amount;
-    }
+    if (trx.type?.toLowerCase() === "income") {
+  monthlyMap[month].income += trx.amount;
+  }
 
-    if (trx.type === "expense") {
-      monthlyMap[month].expense += trx.amount;
-    }
+  if (trx.type?.toLowerCase() === "expense") {
+    monthlyMap[month].expense += trx.amount;
+  }
+
   });
 
   const monthsOrder = [
@@ -209,29 +228,55 @@ const getMonthlyData = (timeRange = "month") => {
   }, [fetchAllData]);
 
   // ================= TRANSACTION STATE (LOCAL ONLY) =================
-const addTransaction = useCallback((transaction) => {
-  if (!transaction) return;
+const addTransaction = useCallback(
+  (transaction) => {
+    if (!categories.length) return;
 
-  setTransactions((prev) => [transaction, ...prev]);
+    const category = categories.find(
+      (c) => Number(c.id) === Number(transaction.category_id)
+    );
 
-  setWallets((prevWallets) =>
-    prevWallets.map((w) => {
-      if (Number(w.id) !== Number(transaction.wallet_id)) return w;
+    setTransactions((prev) => [
+      {
+        ...transaction,
+        category_name: category?.name || "Uncategorized",
+      },
+      ...prev,
+    ]);
+  },
+  [categories]
+);
 
-      if (transaction.type === "income") {
-        return { ...w, balance: w.balance + transaction.amount };
-      }
+const updateTransaction = useCallback(
+  async (id, data) => {
+    await updateTransactionApi(id, data);
 
-      if (transaction.type === "expense") {
-        return { ...w, balance: w.balance - transaction.amount };
-      }
+    setTransactions((prev) =>
+      prev.map((t) =>
+        t.id === id
+          ? {
+              ...t,
+              ...data,
+              id,
+              amount: Number(data.amount),
+              category_id: Number(data.category_id),
+              category_name:
+                categories.find(
+                  (c) => c.id === Number(data.category_id)
+                )?.name || "Uncategorized",
+            }
+          : t
+      )
+    );
+  },
+  [categories]
+);
 
-      return w;
-    })
-  );
-}, []);
+const removeTransaction = useCallback(async (id) => {
+  // 1. DELETE KE BACKEND
+  await deleteTransactionApi(id);
 
-const removeTransaction = useCallback((id) => {
+  // 2. UPDATE STATE
   setTransactions((prev) => {
     const trx = prev.find((t) => t.id === id);
     if (!trx) return prev;
@@ -356,6 +401,7 @@ const removeBudget = async (categoryId) => {
         walletTotals,
         addTransaction,
         removeTransaction,
+        updateTransaction,
 
         afterMutation,
 

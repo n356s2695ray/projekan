@@ -78,8 +78,7 @@ const Analytics = () => {
   const [activeChart, setActiveChart] = useState("spending");
 
   const categoryData = getCategoryData("expense") || [];
-  const monthlyTrend = getMonthlyData("expense") || [];
-  const incomeTrend = getMonthlyData("income") || [];
+  const monthlyComparison = getMonthlyData(timeRange) || [];
 
   const topCategories = [...categoryData]
     .sort((a, b) => b.total - a.total)
@@ -87,11 +86,11 @@ const Analytics = () => {
 
   // Calculate insights
   const totalSpent = categoryData.reduce((sum, cat) => sum + cat.total, 0);
-  const averageSpending =
-    monthlyTrend.length > 0
-      ? monthlyTrend.reduce((sum, month) => sum + month.total, 0) /
-        monthlyTrend.length
-      : 0;
+const averageSpending =
+  monthlyComparison.length > 0
+    ? monthlyComparison.reduce((sum, m) => sum + m.expense, 0) /
+      monthlyComparison.length
+    : 0;
   const savingsRate =
     totalIncome > 0 ? ((totalIncome - totalExpense) / totalIncome) * 100 : 0;
 
@@ -144,12 +143,6 @@ const Analytics = () => {
     fullMark: 100,
   }));
 
-  const monthlyComparison = monthlyTrend.map((month, index) => ({
-    month: month.month,
-    expense: month.total,
-    income: incomeTrend[index]?.total || 0,
-  }));
-
   const getCategoryIcon = (category) => {
     const icons = {
       Food: Utensils,
@@ -172,6 +165,9 @@ const Analytics = () => {
       minimumFractionDigits: 0,
     }).format(amount);
   };
+  console.log("categoryData", categoryData);
+  console.log("monthlyComparison", monthlyComparison);
+
 
   return (
     <div className="min-h-screen pb-6">
@@ -284,42 +280,44 @@ const Analytics = () => {
             </div>
 
             <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <RePieChart>
-                  <Pie
-                    data={topCategories}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, percent }) =>
-                      `${name}: ${(percent * 100).toFixed(0)}%`
-                    }
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="total"
-                  >
-                    {topCategories.map((entry, index) => (
-                      <Cell
-                        key={`cell-${index}`}
-                        fill={COLORS[index % COLORS.length]}
-                      />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: darkMode ? '#1f2937' : '#ffffff',
-                      borderColor: darkMode ? '#374151' : '#d1d5db',
-                      color: darkMode ? '#e5e7eb' : '#374151',
-                    }}
-                    formatter={(value) => [formatCurrency(value), "Amount"]}
-                  />
-                  <Legend 
-                    wrapperStyle={{
-                      color: darkMode ? '#e5e7eb' : '#374151',
-                    }}
-                  />
-                </RePieChart>
-              </ResponsiveContainer>
+              {topCategories.length > 0 && (
+                <ResponsiveContainer width="100%" height="100%">
+                  <RePieChart>
+                    <Pie
+                      data={topCategories}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ name, percent }) =>
+                        `${name}: ${(percent * 100).toFixed(0)}%`
+                      }
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="total"
+                    >
+                      {topCategories.map((entry, index) => (
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={COLORS[index % COLORS.length]}
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: darkMode ? '#1f2937' : '#ffffff',
+                        borderColor: darkMode ? '#374151' : '#d1d5db',
+                        color: darkMode ? '#e5e7eb' : '#374151',
+                      }}
+                      formatter={(value) => [formatCurrency(value), "Amount"]}
+                    />
+                    <Legend
+                      wrapperStyle={{
+                        color: darkMode ? '#e5e7eb' : '#374151',
+                      }}
+                    />
+                  </RePieChart>
+                </ResponsiveContainer>
+              )}
             </div>
 
             {/* Category Breakdown */}
@@ -585,7 +583,6 @@ const Analytics = () => {
           <h3 className={`text-xl font-bold mb-6 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
             Recommendations
           </h3>
-
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className={`p-6 rounded-xl border ${
               darkMode ? "bg-gray-800/50 border-gray-700" : "bg-gray-100 border-gray-200"
